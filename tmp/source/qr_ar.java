@@ -41,6 +41,7 @@ public void setup() {
 
 
   detector = Boof.detectQR();
+  println("TEST");
 }
 
 public void draw() {

@@ -18,6 +18,7 @@ void setup() {
 
 
   detector = Boof.detectQR();
+  println("TEST");
 }
 
 void draw() {
@@ -46,9 +47,9 @@ void draw() {
       Point2D_F64 p = qr.bounds.get(0);
 
       fill(255, 0, 0);
-      if (qr.message.charAt(3) == '1') {
-        text("Warning!", (int)p.x-10, (int)p.y-10);
-      }
+      /* if (qr.message.charAt(3) == '1') { */
+      /*   text("Warning!", (int)p.x-10, (int)p.y-10); */
+      /* } */
       fill(255, 0, 0, 50);
       vertex( (int)p.x, (int)p.y );
 
