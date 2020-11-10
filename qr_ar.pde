@@ -16,13 +16,21 @@ SimpleGray gray;
 PImage imgContour;
 PImage imgBlobs;
 PImage input;
+int debug = 0;
+String[] debugText = {""};
+StringDict debugInventory;
 
 void setup() {
-
+  debugInventory = new StringDict();
+  debug = 1;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
   initializeCamera(640, 480);
-  surface.setSize(cam.width*2, cam.height);
+  if (debug > 0) {
+    surface.setSize(cam.width*2, cam.height);
+  } else {
+    surface.setSize(cam.width, cam.height);
+  }
 
   detector = Boof.detectQR();
 }
@@ -34,15 +42,21 @@ void draw() {
     List<QrCode> found = detector.detect(cam);
 
     image(cam, 0, 0);
-    image(cam, cam.width, 0);
+    /* image(cam, cam.width, 0); */
     // Configure the line's appearance
-    strokeWeight(5);
-    stroke(255, 0, 0);
+
 
     Point2D_F64[] bounds = new Point2D_F64[4];
 
     // The QR codes being tested have a height and width of 42
     for ( QrCode qr : found ) {
+      if (debug > 0) {
+        fill(255, 255, 255);
+        /* stroke(0); */
+        /* strokeWeight(10); */
+
+        rect(cam.width, 0, cam.width, cam.height);
+      }
       /* println("message             "+qr.message); */
       /* println("qr.bounds.size():    " +  qr.bounds.size()); */
 
@@ -63,17 +77,104 @@ void draw() {
       // close the loop
       Point2D_F64 p = newBounds[0];
 
+      if (debug > 0) {
+        debugPrint(12);
+        colorPoints(bounds);
+        colorPoints(newBounds);
+      }
       /* fill(255, 0, 0); */
       /* if (qr.message.charAt(3) == '1') { */
       /*   text("Warning!", (int)p.x-10, (int)p.y-10); */
       /* } */
+      strokeWeight(5);
+      stroke(255, 0, 0);
       fill(255, 0, 0, 50);
       vertex( (int)p.x, (int)p.y );
 
       endShape();
+      noStroke();
     }
 
   }
+}
+
+void debugPrint(int textsize) {
+  /* String dist = "distance: " + floor(distance); */
+  /* String newDist = "newDistance: " + floor(newDistance); */
+  int start = 260;
+  textSize(textsize);
+  /* strokeWeight(1); */
+  /* stroke(0, 0, 0, 50); */
+  fill(255, 255, 255);
+  rect(640, 240, 640, 240);
+  fill(0, 0, 0);
+  String print = "";
+  String[] keys = debugInventory.keyArray();
+  if (keys.length > 0) {
+    for (int i = 0; i < keys.length; i++) {
+      /* println("Keys[i]: " + keys[i]); */
+      print = keys[i] + ": " + debugInventory.get(keys[i]);
+      /* int number = debugInventory.get(key[i]); */
+      /* println("number: " + number); */
+      /* println("print: " + print); */
+      text(print, 642, start);
+      start = start + textsize + 2;
+    };
+  }
+  /* text(dist, 660, 400); */
+  /* text(newDist, 660, 440); */
+
+}
+
+void addDebugText(String data) {
+  debugText = append(debugText, data);
+}
+
+void colorPoints(Point2D_F64[] points) {
+  float s_width = cam.width;
+  Point2D_F64 a = points[0];
+  Point2D_F64 b = points[1];
+  Point2D_F64 c = points[2];
+  Point2D_F64 d = points[3];
+  float aX = (float)a.getX() + s_width;
+  float aY = (float)a.getY();
+
+  float bX = (float)b.getX() + s_width;
+  float bY = (float)b.getY();
+
+  float cX = (float)c.getX() + s_width;
+  float cY = (float)c.getY();
+
+  float dX = (float)d.getX() + s_width;
+  float dY = (float)d.getY();
+  strokeWeight(10);
+
+  /* stroke(0, 0, 200); */
+  /* point(aX, aY); */
+
+  textSize(16);
+  fill(0, 0, 200);
+  text("A", aX, aY);
+
+  /* stroke(200, 0, 0); */
+  /* point(bX, bY); */
+  fill(200, 0, 0);
+  text("B", bX, bY);
+
+  fill(0, 200, 0);
+  text("C", cX, cY);
+
+  fill(255, 153, 51);
+  text("D", dX, dY);
+
+
+
+/*   stroke(0, 200, 0); */
+/*   point(cX, cY); */
+
+/*   stroke(255, 255, 0); */
+/*   point(dX, dY); */
+/*   noStroke(); */
 }
 
 Point2D_F64[] expandBoundsByPerspective(int qrWidth, int expandX, int expandY, Point2D_F64[] bounds) {
@@ -150,11 +251,12 @@ Point2D_F64[] expandifier(int qrWidth, int expandX, int expandY, Point2D_F64[] p
   b = bc[0];
   c = bc[1];
   // gather extended points and return them
-  points[0] = a;
-  points[1] = b;
-  points[2] = c;
-  points[3] = d;
-  return points;
+  Point2D_F64[] newPoints = new Point2D_F64[4];
+  newPoints[0] = a;
+  newPoints[1] = b;
+  newPoints[2] = c;
+  newPoints[3] = d;
+  return newPoints;
 }
 
 
@@ -189,9 +291,14 @@ float checkPi(float angle) {
 }
 float getDistance(float x1, float y1, float x2, float y2, float ratio) {
   float distance = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
-  println("distance: " + distance);
+  /* println("distance: " + distance); */
   float newDistance = (distance * ratio - distance)/2;
-  println("newDistance: "+ newDistance);
+  /* println("newDistance: "+ newDistance); */
+  if (debug > 0) {
+    debugInventory.set("distance", str(floor(distance)));
+    debugInventory.set("newDistance", str(floor(newDistance)));
+
+  }
   return newDistance;
 }
 
