@@ -22,7 +22,7 @@ StringDict debugInventory;
 
 void setup() {
   debugInventory = new StringDict();
-  debug = 2;
+  debug = 1;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
   initializeCamera(640, 480);
