@@ -16,16 +16,14 @@ SimpleGray gray;
 PImage imgContour;
 PImage imgBlobs;
 PImage input;
+PImage test;
 int debug = 0;
 String[] debugText = {""};
 StringDict debugInventory;
 
 void setup() {
-  if (debug > 0) {
-    size(1280, 480, P3D);
-  } else {
-    size(640, 480, P3D);
-  }
+  /* size(1280, 480, P3D); */
+  /* size(640, 480, P3D); */
   debugInventory = new StringDict();
   debug = 2;
   /* size(1280, 480); */
@@ -47,6 +45,9 @@ void draw() {
     List<QrCode> found = detector.detect(cam);
     gray = Boof.gray(cam,ImageDataType.F32);
 
+    /* test = gray.convert(); */
+    test = cam;
+    test.loadPixels();
     image(gray.convert(), 0, 0);
     /* image(cam, cam.width, 0); */
     // Configure the line's appearance
