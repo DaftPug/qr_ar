@@ -17,18 +17,22 @@ PImage imgContour;
 PImage imgBlobs;
 PImage input;
 PImage test;
+PImage saturated;
+PGraphics pg;
 int debug = 0;
 String[] debugText = {""};
 StringDict debugInventory;
 
 void setup() {
-  /* size(1280, 480, P3D); */
+  size(1280, 480, P2D);
   /* size(640, 480, P3D); */
   debugInventory = new StringDict();
   debug = 2;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
   initializeCamera(640, 480);
+  pg = createGraphics(640, 480);
+
   if (debug > 0) {
     surface.setSize(cam.width*2, cam.height);
   } else {
@@ -44,11 +48,12 @@ void draw() {
 
     List<QrCode> found = detector.detect(cam);
     gray = Boof.gray(cam,ImageDataType.F32);
-
+    saturated = gray.convert();
+    /* saturated.mask(cam); */
     /* test = gray.convert(); */
-    test = cam;
-    test.loadPixels();
-    image(gray.convert(), 0, 0);
+    /* test = cam; */
+    /* test.loadPixels(); */
+    image(saturated, 0, 0);
     /* image(cam, cam.width, 0); */
     // Configure the line's appearance
 
@@ -67,9 +72,8 @@ void draw() {
       /* println("message             "+qr.message); */
       /* println("qr.bounds.size():    " +  qr.bounds.size()); */
 
-      // Draw a line around each detected QR Code
-      beginShape();
-      texture(cam);
+      /* image(cam, 0, 0); */
+      /* texture(cam); */
       for ( int i = 0; i < qr.bounds.size(); i++ ) {
         /* println("qr.bounds.get(i):      " + qr.bounds.get(i)); */
         bounds[i] = qr.bounds.get(i);
@@ -86,34 +90,68 @@ void draw() {
       }
 
       Point2D_F64[] newBounds = expandifier(42, 82, 230, bounds);
-      for ( int i = 0; i < newBounds.length; i++ ) {
-        /* Point2D_F64 p = qr.bounds.get(i); */
-        Point2D_F64 p = newBounds[i];
-        vertex( (int)p.x, (int)p.y );
-      }
 
-      // close the loop
-      Point2D_F64 p = newBounds[0];
+      drawVertices(bounds, newBounds);
+      /* drawNewPoints(newBounds); */
 
-      if (debug > 0) {
-        debugPrint(8);
-        colorPoints(bounds);
-        colorPoints(newBounds);
-      }
-      /* fill(255, 0, 0); */
-      /* if (qr.message.charAt(3) == '1') { */
-      /*   text("Warning!", (int)p.x-10, (int)p.y-10); */
-      /* } */
-      strokeWeight(5);
-      stroke(255, 0, 0);
-      /* fill(255, 0, 0, 50); */
-      vertex( (int)p.x, (int)p.y );
-
-      endShape();
       noStroke();
     }
 
   }
+}
+
+void drawNewPoints(Point2D_F64[] points) {
+  Point2D_F64 a = points[0];
+  Point2D_F64 b = points[1];
+  Point2D_F64 c = points[2];
+  Point2D_F64 d = points[3];
+  float aX = (float)a.getX();
+  float aY = (float)a.getY();
+
+  float bX = (float)b.getX();
+  float bY = (float)b.getY();
+
+  float cX = (float)c.getX();
+  float cY = (float)c.getY();
+
+  float dX = (float)d.getX();
+  float dY = (float)d.getY();
+  pg.camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0), width/2.0, height/2.0, 0, 0, 1, 0);
+  pg.beginCamera();
+  pg.quad(aX, aY, bX, bY, cX, cY, dX, dY);
+  /* pg.image(cam); */
+  pg.endCamera();
+}
+
+void drawVertices(Point2D_F64[] bounds, Point2D_F64[] newBounds) {
+  // Draw a line around each detected QR Code
+  beginShape();
+
+    for ( int i = 0; i < newBounds.length; i++ ) {
+      /* Point2D_F64 p = qr.bounds.get(i); */
+      Point2D_F64 p = newBounds[i];
+      vertex( (int)p.x, (int)p.y );
+    }
+
+    // close the loop
+    Point2D_F64 p = newBounds[0];
+
+    if (debug > 0) {
+      debugPrint(8);
+      colorPoints(bounds);
+      colorPoints(newBounds);
+    }
+    /* fill(255, 0, 0); */
+    /* if (qr.message.charAt(3) == '1') { */
+    /*   text("Warning!", (int)p.x-10, (int)p.y-10); */
+    /* } */
+    strokeWeight(5);
+    stroke(255, 0, 0);
+    /* fill(255, 0, 0, 50); */
+    vertex( (int)p.x, (int)p.y );
+
+  endShape();
+
 }
 
 void debugPrint(int textsize) {
