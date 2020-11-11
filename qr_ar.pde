@@ -22,7 +22,7 @@ StringDict debugInventory;
 
 void setup() {
   debugInventory = new StringDict();
-  debug = 1;
+  debug = 2;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
   initializeCamera(640, 480);
@@ -65,10 +65,19 @@ void draw() {
       for ( int i = 0; i < qr.bounds.size(); i++ ) {
         /* println("qr.bounds.get(i):      " + qr.bounds.get(i)); */
         bounds[i] = qr.bounds.get(i);
+        if (debug > 1) {
+          String printpoints = "";
+          for (int j = 0; j < bounds.length; j++) {
+            printpoints = printpoints + bounds[j].toString();
+          };
+          debugInventory.set("bounds: ", printpoints);
+          /* println("bounds:"); */
+          /* println(bounds); */
+        }
       }
 
       Point2D_F64[] newBounds = expandifier(42, 82, 230, bounds);
-      for ( int i = 0; i < qr.bounds.size(); i++ ) {
+      for ( int i = 0; i < newBounds.length; i++ ) {
         /* Point2D_F64 p = qr.bounds.get(i); */
         Point2D_F64 p = newBounds[i];
         vertex( (int)p.x, (int)p.y );
@@ -230,6 +239,15 @@ Point2D_F64[] expandBoundsByPerspective(int qrWidth, int expandX, int expandY, P
 }
 
 Point2D_F64[] expandifier(int qrWidth, int expandX, int expandY, Point2D_F64[] points) {
+  if (debug > 1) {
+    String printpoints = "";
+    for (int i = 0; i < points.length; i++) {
+      printpoints = printpoints + points[i].toString();
+    };
+    debugInventory.set("points: ", printpoints);
+    /* println("points:"); */
+    /* println(points); */
+  }
   float ratioX = (float)expandX / (float)qrWidth;
   float ratioY = (float)expandY / (float)qrWidth;
   Point2D_F64 a = points[0];
@@ -244,21 +262,30 @@ Point2D_F64[] expandifier(int qrWidth, int expandX, int expandY, Point2D_F64[] p
   c = cd[0];
   d = cd[1];
   // extend a -> d & b -> c
-  Point2D_F64[] ad = extender(a, d, ratioY);
-  Point2D_F64[] bc = extender(b, c, ratioY);
-  a = ad[0];
-  d = ad[1];
-  b = bc[0];
-  c = bc[1];
+  Point2D_F64[] da = extender(d, a, ratioY);
+  Point2D_F64[] cb = extender(c, b, ratioY);
+  d = da[0];
+  a = da[1];
+  c = cb[0];
+  b = cb[1];
   // gather extended points and return them
   Point2D_F64[] newPoints = new Point2D_F64[4];
   newPoints[0] = a;
   newPoints[1] = b;
   newPoints[2] = c;
   newPoints[3] = d;
+  if (debug > 1) {
+    String printpoints = "";
+    for (int i = 0; i < newPoints.length; i++) {
+      printpoints = printpoints + newPoints[i].toString();
+    };
+    debugInventory.set("newPoints: ", printpoints);
+    /* debugInventory.set("newPoints:", newPoints.toString()); */
+    /* println("newPoints:"); */
+    /* println(newPoints); */
+  }
   return newPoints;
 }
-
 
 Point2D_F64[] extender(Point2D_F64 a, Point2D_F64 b, float ratio) {
   float x1 = (float)a.getX();
@@ -289,6 +316,7 @@ float checkPi(float angle) {
   }
   return angle;
 }
+
 float getDistance(float x1, float y1, float x2, float y2, float ratio) {
   float distance = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
   /* println("distance: " + distance); */
@@ -305,7 +333,7 @@ float getDistance(float x1, float y1, float x2, float y2, float ratio) {
 float atanifier(float x1, float y1, float x2, float y2) {
   float y = y2 - y1;
   float x = x2 - x1;
-  float rad = atan2(y,x);
+  float rad = atan2(y,x) + HALF_PI;
   return rad;
 }
 
@@ -362,7 +390,9 @@ double[] expander(double p1, double p2, float ratio, int bound) {
 
 void initializeCamera( int desiredWidth, int desiredHeight ) {
   String[] cameras = Capture.list();
-
+  /* for (int i = 0; i < cameras.length; i++) { */
+  /*   println("[" + i + "] " + cameras[i]); */
+  /* }; */
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
