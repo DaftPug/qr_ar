@@ -21,8 +21,13 @@ String[] debugText = {""};
 StringDict debugInventory;
 
 void setup() {
+  if (debug > 0) {
+    size(1280, 480, P3D);
+  } else {
+    size(640, 480, P3D);
+  }
   debugInventory = new StringDict();
-  debug = 0;
+  debug = 2;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
   initializeCamera(640, 480);
@@ -40,8 +45,9 @@ void draw() {
     cam.read();
 
     List<QrCode> found = detector.detect(cam);
+    gray = Boof.gray(cam,ImageDataType.F32);
 
-    image(cam, 0, 0);
+    image(gray.convert(), 0, 0);
     /* image(cam, cam.width, 0); */
     // Configure the line's appearance
 
@@ -62,18 +68,20 @@ void draw() {
 
       // Draw a line around each detected QR Code
       beginShape();
+      texture(cam);
       for ( int i = 0; i < qr.bounds.size(); i++ ) {
         /* println("qr.bounds.get(i):      " + qr.bounds.get(i)); */
         bounds[i] = qr.bounds.get(i);
-        if (debug > 1) {
-          String printpoints = "";
-          for (int j = 0; j < bounds.length; j++) {
-            printpoints = printpoints + bounds[j].toString();
-          };
-          debugInventory.set("bounds: ", printpoints);
-          /* println("bounds:"); */
-          /* println(bounds); */
-        }
+
+      }
+      if (debug > 1) {
+        String printpoints = "";
+        for (int j = 0; j < bounds.length; j++) {
+          printpoints = printpoints + bounds[j].toString();
+        };
+        debugInventory.set("bounds: ", printpoints);
+        /* println("bounds:"); */
+        /* println(bounds); */
       }
 
       Point2D_F64[] newBounds = expandifier(42, 82, 230, bounds);
@@ -87,7 +95,7 @@ void draw() {
       Point2D_F64 p = newBounds[0];
 
       if (debug > 0) {
-        debugPrint(12);
+        debugPrint(8);
         colorPoints(bounds);
         colorPoints(newBounds);
       }
@@ -97,7 +105,7 @@ void draw() {
       /* } */
       strokeWeight(5);
       stroke(255, 0, 0);
-      fill(255, 0, 0, 50);
+      /* fill(255, 0, 0, 50); */
       vertex( (int)p.x, (int)p.y );
 
       endShape();
@@ -326,7 +334,7 @@ Point2D_F64[] extender(Point2D_F64 a, Point2D_F64 b, float ratio) {
   /* println("angle: " + degrees(angle)); */
   /* println("reverseAngle: " + degrees(reverseAngle)); */
   Point2D_F64 newB = extendedPoint(x2, y2, angle, distance);
-  Point2D_F64 newA = extendedPoint(x1, y1, angle, distance);
+  Point2D_F64 newA = extendedPoint(x1, y1, reverseAngle, distance);
   Point2D_F64[] extensions = new Point2D_F64[2];
   extensions[0] = newA;
   extensions[1] = newB;
@@ -350,7 +358,7 @@ float getDistance(float x1, float y1, float x2, float y2, float ratio) {
   /* println("distance: " + distance); */
   float newDistance = (distance * ratio - distance)/2;
   /* println("newDistance: "+ newDistance); */
-  if (debug > 0) {
+  if (debug > 2) {
     debugInventory.set("distance", str(floor(distance)));
     debugInventory.set("newDistance", str(floor(newDistance)));
 
