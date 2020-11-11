@@ -22,7 +22,7 @@ StringDict debugInventory;
 
 void setup() {
   debugInventory = new StringDict();
-  debug = 1;
+  debug = 0;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
   initializeCamera(640, 480);
@@ -186,6 +186,27 @@ void colorPoints(Point2D_F64[] points) {
 /*   noStroke(); */
 }
 
+Point2D_F64[] expander(int qrWidth, int expandX, int expandY, Point2D_F64[] bounds) {
+
+  return bounds;
+}
+
+String[] getDirection(float x1, float y1, float x2, float y2) {
+  String[] direction = {"", ""};
+  if (x2 > x1) {
+    direction[0] = "right";
+  } else if (x2 < x1) {
+    direction[0] = "left";
+  }
+
+  if (y2 > y1) {
+    direction[1] = "up";
+  } else if (y2 < y1) {
+    direction[1] = "down";
+  }
+ return direction;
+}
+
 Point2D_F64[] expandBoundsByPerspective(int qrWidth, int expandX, int expandY, Point2D_F64[] bounds) {
   float ratioX = (float)expandX / (float)qrWidth;
   float ratioY = (float)expandY / (float)qrWidth;
@@ -262,18 +283,25 @@ Point2D_F64[] expandifier(int qrWidth, int expandX, int expandY, Point2D_F64[] p
   c = cd[0];
   d = cd[1];
   // extend a -> d & b -> c
-  Point2D_F64[] da = extender(d, a, ratioY);
-  Point2D_F64[] cb = extender(c, b, ratioY);
-  d = da[0];
-  a = da[1];
-  c = cb[0];
-  b = cb[1];
+  Point2D_F64[] ad = extender(a, d, ratioY);
+  Point2D_F64[] bc = extender(b, c, ratioY);
+  a = ad[0];
+  d = ad[1];
+  b = bc[0];
+  c = bc[1];
+  /* Point2D_F64[] da = extender(d, a, ratioY); */
+  /* Point2D_F64[] cb = extender(c, b, ratioY); */
+  /* d = da[0]; */
+  /* a = da[1]; */
+  /* c = cb[0]; */
+  /* b = cb[1]; */
+
   // gather extended points and return them
-  Point2D_F64[] newPoints = new Point2D_F64[4];
-  newPoints[0] = a;
-  newPoints[1] = b;
-  newPoints[2] = c;
-  newPoints[3] = d;
+  Point2D_F64[] newPoints = {a, b, c, d};
+  /* newPoints[0] = a; */
+  /* newPoints[1] = b; */
+  /* newPoints[2] = c; */
+  /* newPoints[3] = d; */
   if (debug > 1) {
     String printpoints = "";
     for (int i = 0; i < newPoints.length; i++) {
@@ -298,7 +326,7 @@ Point2D_F64[] extender(Point2D_F64 a, Point2D_F64 b, float ratio) {
   /* println("angle: " + degrees(angle)); */
   /* println("reverseAngle: " + degrees(reverseAngle)); */
   Point2D_F64 newB = extendedPoint(x2, y2, angle, distance);
-  Point2D_F64 newA = extendedPoint(x1, y1, reverseAngle, distance);
+  Point2D_F64 newA = extendedPoint(x1, y1, angle, distance);
   Point2D_F64[] extensions = new Point2D_F64[2];
   extensions[0] = newA;
   extensions[1] = newB;
@@ -333,7 +361,7 @@ float getDistance(float x1, float y1, float x2, float y2, float ratio) {
 float atanifier(float x1, float y1, float x2, float y2) {
   float y = y2 - y1;
   float x = x2 - x1;
-  float rad = atan2(y,x) + HALF_PI;
+  float rad = atan2(y,x);// + HALF_PI;
   return rad;
 }
 
