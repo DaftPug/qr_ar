@@ -1,13 +1,18 @@
 // Launches a webcam and searches for QR Codes, prints their message and draws their outline
 // Edited by Victor Permild for Situating Interactions 2020, ITU Copenhagen
 
+import java.util.*;
+// for Capture
 import processing.video.*;
+// for qrDetection
 import boofcv.processing.*;
 import boofcv.struct.image.*;
-import java.util.*;
+import boofcv.alg.fiducial.qrcode.QrCode;
+// for saturation;
+import milchreis.imageprocessing.*;
+//for Polygon2D_F64 points and shapes
 import georegression.struct.shapes.Polygon2D_F64;
 import georegression.struct.point.Point2D_F64;
-import boofcv.alg.fiducial.qrcode.QrCode;
 
 Capture cam;
 SimpleQrCode detector;
@@ -18,20 +23,28 @@ PImage imgBlobs;
 PImage input;
 PImage test;
 PImage saturated;
+PShape ps;
 PGraphics pg;
+PGraphics bg;
+PGraphics cammi;
+ArrayList<PGraphics> graphics = new ArrayList<PGraphics>();
+int layerLimit;
 int debug = 0;
 String[] debugText = {""};
 StringDict debugInventory;
 
 void setup() {
-  size(1280, 480, P2D);
+  size(1280, 480);
   /* size(640, 480, P3D); */
   debugInventory = new StringDict();
   debug = 2;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
   initializeCamera(640, 480);
-  pg = createGraphics(640, 480);
+  graphics.add(createGraphics(640,480));
+  /* pg = createGraphics(640, 480); */
+  bg = createGraphics(640, 480);
+  /* cammi = createGraphics(640, 480); */
 
   if (debug > 0) {
     surface.setSize(cam.width*2, cam.height);
@@ -43,25 +56,42 @@ void setup() {
 }
 
 void draw() {
+  graphics.get(0).beginDraw();
+
+  /* pg.beginDraw(); */
   if (cam.available() == true) {
     cam.read();
 
     List<QrCode> found = detector.detect(cam);
-    gray = Boof.gray(cam,ImageDataType.F32);
-    saturated = gray.convert();
-    /* saturated.mask(cam); */
-    /* test = gray.convert(); */
-    /* test = cam; */
-    /* test.loadPixels(); */
-    image(saturated, 0, 0);
-    /* image(cam, cam.width, 0); */
-    // Configure the line's appearance
+    if (found.size() == 0) {
+      if (graphics.size() > 0) {
+        for (int i = 0; i < graphics.size() - 1; i++) {
+          graphics.remove(i + 1);
+        };
+      }
+    }
+    layerLimit = found.size();
+    /* gray = Boof.gray(cam,ImageDataType.F32); */
+    /* saturated = gray.convert(); */
+    saturated = Saturation.apply(cam, 0.05);
+    graphics.get(0).image(saturated, 0, 0);
+    /* float intensity = map(mouseX, 0, width, 0.0f, 2.0f); */
+    /* println("intensity: " + intensity); */
+    /* pg.image(saturated, 0, 0); */
+    /* image(saturated, 0, 0); */
+    /* image(saturated, 0, 0); */
+    /* image(cam, 0, 0); */
 
 
     Point2D_F64[] bounds = new Point2D_F64[4];
 
+    /* testDraw(); */
+    /* testPshape(); */
     // The QR codes being tested have a height and width of 42
     for ( QrCode qr : found ) {
+      if (graphics.size() < layerLimit + 1) {
+        graphics.add(createGraphics(640,480));
+      }
       if (debug > 0) {
         fill(255, 255, 255);
         /* stroke(0); */
@@ -90,14 +120,61 @@ void draw() {
       }
 
       Point2D_F64[] newBounds = expandifier(42, 82, 230, bounds);
-
-      drawVertices(bounds, newBounds);
+      drawGraphics(newBounds);
+      /* drawVertices(bounds, newBounds); */
       /* drawNewPoints(newBounds); */
+      /* saturator(newBounds); */
 
       noStroke();
     }
 
   }
+
+  /* pg.endDraw(); */
+
+  /* image(pg, 0, 0); */
+  graphics.get(0).endDraw();
+  for (int i = 0; i < graphics.size(); i++) {
+    image(graphics.get(i), 0, 0);
+  };
+  /* println("graphics: " + graphics.size()); */
+  /* image(graphics.get(0), 0, 0); */
+}
+
+void drawGraphics(Point2D_F64[] points) {
+  Point2D_F64 a = points[0];
+  Point2D_F64 b = points[1];
+  Point2D_F64 c = points[2];
+  Point2D_F64 d = points[3];
+  int token = 1;
+  graphics.get(token).beginDraw();
+  graphics.get(token).image(cam, 0, 0);
+  bg.beginDraw();
+  bg.noStroke();
+  bg.quad((float)a.x, (float)a.y, (float)b.x, (float)b.y, (float)c.x, (float)c.y, (float)d.x, (float)d.y);
+  bg.endDraw();
+  graphics.get(token).endDraw();
+  graphics.get(token).mask(bg);
+  bg.clear();
+
+}
+
+void testDraw() {
+  /* cam.loadPixels(); */
+  cammi.beginDraw();
+  cammi.image(cam, 0, 0);
+  bg.beginDraw();
+  /* bg.image(cam, 0, 0); */
+  /* pg.fill(255); */
+  /* pg.stroke(0); */
+  bg.noStroke();
+  /* pg.image(cam, 0, 0); */
+  bg.quad(50, 50, 150, 50, 384, 200, 76, 245);
+  bg.endDraw();
+  cammi.endDraw();
+  cammi.mask(bg);
+  /* pg.endDraw(); */
+  /* image(pg, 0, 0); */
 }
 
 void drawNewPoints(Point2D_F64[] points) {
@@ -382,6 +459,7 @@ Point2D_F64[] extender(Point2D_F64 a, Point2D_F64 b, float ratio) {
 
 }
 
+
 float checkPi(float angle) {
   angle = angle + PI;
   if (angle > 2*PI) {
@@ -472,7 +550,7 @@ void initializeCamera( int desiredWidth, int desiredHeight ) {
     println("There are no cameras available for capture.");
     exit();
   } else {
-    cam = new Capture(this, desiredWidth, desiredHeight);
+    cam = new Capture(this, desiredWidth, desiredHeight, 30);
     cam.start();
   }
 }
