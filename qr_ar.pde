@@ -28,6 +28,7 @@ PGraphics pg;
 PGraphics bg;
 PGraphics cammi;
 ArrayList<PGraphics> graphics = new ArrayList<PGraphics>();
+HashMap<String, Object> qrArray;
 int layerLimit;
 int debug = 0;
 String[] debugText = {""};
@@ -37,6 +38,7 @@ void setup() {
   size(1280, 480);
   /* size(640, 480, P3D); */
   debugInventory = new StringDict();
+  qrArray = new HashMap<String, Object>();
   debug = 1;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
@@ -380,27 +382,6 @@ void colorPoints(Point2D_F64[] points) {
 /*   noStroke(); */
 }
 
-Point2D_F64[] expander(int qrWidth, int expandX, int expandY, Point2D_F64[] bounds) {
-
-  return bounds;
-}
-
-String[] getDirection(float x1, float y1, float x2, float y2) {
-  String[] direction = {"", ""};
-  if (x2 > x1) {
-    direction[0] = "right";
-  } else if (x2 < x1) {
-    direction[0] = "left";
-  }
-
-  if (y2 > y1) {
-    direction[1] = "up";
-  } else if (y2 < y1) {
-    direction[1] = "down";
-  }
- return direction;
-}
-
 Point2D_F64[] expandBoundsByPerspective(int qrWidth, int expandX, int expandY, Point2D_F64[] bounds) {
   float ratioX = (float)expandX / (float)qrWidth;
   float ratioY = (float)expandY / (float)qrWidth;
@@ -449,82 +430,6 @@ Point2D_F64[] expandBoundsByPerspective(int qrWidth, int expandX, int expandY, P
   Point2D_F64[] newPoints = {a, b, c, d};
   return newPoints;
 }
-
-/* Point2D_F64[] expandifier(int qrWidth, int expandX, int expandY, Point2D_F64[] points) { */
-  /* if (debug > 1) { */
-  /*   String printpoints = ""; */
-  /*   for (int i = 0; i < points.length; i++) { */
-  /*     printpoints = printpoints + points[i].toString(); */
-  /*   }; */
-  /*   debugInventory.set("points: ", printpoints); */
-  /*   /1* println("points:"); *1/ */
-  /*   /1* println(points); *1/ */
-  /* } */
-  /* float ratioX = (float)expandX / (float)qrWidth; */
-  /* float ratioY = (float)expandY / (float)qrWidth; */
-  /* Point2D_F64 a = points[0]; */
-  /* Point2D_F64 b = points[1]; */
-  /* Point2D_F64 c = points[2]; */
-  /* Point2D_F64 d = points[3]; */
-  /* // extend a -> b & c -> d */
-  /* Point2D_F64[] ab = extender(a, b, ratioX); */
-  /* Point2D_F64[] cd = extender(c, d, ratioX); */
-  /* a = ab[0]; */
-  /* b = ab[1]; */
-  /* c = cd[0]; */
-  /* d = cd[1]; */
-  /* // extend a -> d & b -> c */
-  /* Point2D_F64[] ad = extender(a, d, ratioY); */
-  /* Point2D_F64[] bc = extender(b, c, ratioY); */
-  /* a = ad[0]; */
-  /* d = ad[1]; */
-  /* b = bc[0]; */
-  /* c = bc[1]; */
-  /* /1* Point2D_F64[] da = extender(d, a, ratioY); *1/ */
-  /* /1* Point2D_F64[] cb = extender(c, b, ratioY); *1/ */
-  /* /1* d = da[0]; *1/ */
-  /* /1* a = da[1]; *1/ */
-  /* /1* c = cb[0]; *1/ */
-  /* /1* b = cb[1]; *1/ */
-
-  /* // gather extended points and return them */
-  /* Point2D_F64[] newPoints = {a, b, c, d}; */
-  /* /1* newPoints[0] = a; *1/ */
-  /* /1* newPoints[1] = b; *1/ */
-  /* /1* newPoints[2] = c; *1/ */
-  /* /1* newPoints[3] = d; *1/ */
-  /* if (debug > 1) { */
-  /*   String printpoints = ""; */
-  /*   for (int i = 0; i < newPoints.length; i++) { */
-  /*     printpoints = printpoints + newPoints[i].toString(); */
-  /*   }; */
-  /*   debugInventory.set("newPoints: ", printpoints); */
-  /*   /1* debugInventory.set("newPoints:", newPoints.toString()); *1/ */
-  /*   /1* println("newPoints:"); *1/ */
-  /*   /1* println(newPoints); *1/ */
-  /* } */
-  /* return newPoints; */
-/* } */
-
-/* Point2D_F64[] extender(Point2D_F64 a, Point2D_F64 b, float ratio) { */
-/*   float x1 = (float)a.getX(); */
-/*   float y1 = (float)a.getY(); */
-/*   float x2 = (float)b.getX(); */
-/*   float y2 = (float)b.getY(); */
-/*   float distance = getDistance(a, b , ratio); */
-/*   float angle = atanifier(x1, y1, x2, y2); */
-/*   float reverseAngle = checkPi(angle); */
-/*   /1* println("angle: " + degrees(angle)); *1/ */
-/*   /1* println("reverseAngle: " + degrees(reverseAngle)); *1/ */
-/*   Point2D_F64 newB = extendedPoint(x2, y2, angle, distance); */
-/*   Point2D_F64 newA = extendedPoint(x1, y1, reverseAngle, distance); */
-/*   Point2D_F64[] extensions = new Point2D_F64[2]; */
-/*   extensions[0] = newA; */
-/*   extensions[1] = newB; */
-
-/*   return extensions; */
-
-/* } */
 
 float checkPi(float angle) {
   angle = angle + PI;
@@ -760,4 +665,125 @@ void initializeCamera( int desiredWidth, int desiredHeight ) {
     cam = new Capture(this, desiredWidth, desiredHeight, 30);
     cam.start();
   }
+}
+
+class QRObject() {
+  // to create unique ID's
+  // import java.util.UUID;
+  // println(UUID.randomUUID().toString());
+  String qrId;
+  Point2D_F64[] qrPoints;
+  Capture cam;
+  float objectWidth;
+  float objectHeight;
+  PGraphics cammie;
+  PGraphics mask;
+
+
+  QRObject(String id, Point2D_F64[] points, Capture camera) {
+    qrId = id;
+    qrPoints = points;
+    cam = camera;
+    objectWidth = 100.0;
+    objectHeight = 100.0;
+    cammie = createGraphics(640, 480);
+    mask = createGraphics(640, 480);
+  }
+
+  void drawObject() {
+    Point2D_F64 a = qrPoints[0];
+    Point2D_F64 b = qrPoints[1];
+    Point2D_F64 c = qrPoints[2];
+    Point2D_F64 d = qrPoints[3];
+    Point2D_F64 center = qrCenter(qrPoints);
+    float angle_one = atanifier(a, b);
+    float angle_two = atanifier(d, c);
+    // they might differ slightly due to viewing angle, so using the average angle to semi-account for this
+    float avr_angle = (angle_one + angle_two) / 2;
+    /* int token = graphics.size() - 1; */
+    cammie.beginDraw();
+    cammie.image(cam, 0, 0);
+    mask.beginDraw();
+    mask.noStroke();
+    /* bg.quad((float)a.x, (float)a.y, (float)b.x, (float)b.y, (float)c.x, (float)c.y, (float)d.x, (float)d.y); */
+    mask.rectMode(CENTER);
+    mask.pushMatrix();
+    mask.translate((float)center.x, (float)center.y);
+    mask.rotate(avr_angle);
+    mask.rect(0, 0, objectWidth, objectHeight);
+    mask.popMatrix();
+    mask.endDraw();
+    cammie.endDraw();
+    cammie.mask(bg);
+    mask.clear();
+
+
+
+  }
+
+  void updateQRPoints(Point2D_F64[] newPoints) {
+    qrPoints = newPoints;
+  }
+
+  float atanifier(Point2D_F64 a, Point2D_F64 b) {
+    float x1 = (float)a.getX();
+    float y1 = (float)a.getY();
+    float x2 = (float)b.getX();
+    float y2 = (float)b.getY();
+    float y = y2 - y1;
+    float x = x2 - x1;
+    float rad = atan2(y,x);// + HALF_PI;
+    return rad;
+  }
+
+  float qrDistance(Point2D_F64 a, Point2D_F64 b) {
+    float x1 = (float)a.getX();
+    float y1 = (float)a.getY();
+    float x2 = (float)b.getX();
+    float y2 = (float)b.getY();
+    float distance = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+    return distance;
+  }
+
+  Point2D_F64 qrCenter(Point2D_F64[] points) {
+    // Because it's a square, you can find the center by taking the average of the x coordinates
+    // of the corners, and then take the average of the y coordinates of the corners.
+    // This will give you the x and y coordinates of the center of the square.
+    // I believe this also works for rectangles.
+    float sumX = 0.0;
+    float sumY = 0.0;
+    for (int i = 0; i < points.length; i++) {
+      sumX = sumX + (float)points[i].x;
+      sumY = sumY + (float)points[i].y;
+    };
+    sumX = sumX / 4;
+    sumY = sumY / 4;
+    Point2D_F64 center = new Point2D_F64(sumX, sumY);
+    return center;
+  }
+
+  void increaseWidth(float increment = 5.0) {
+    objectWidth += increment;
+  }
+
+  void increaseHeight(float increment = 5.0) {
+    objectHeight += increment;
+  }
+
+  void setWidth(float increment) {
+    objectWidth = increment;
+  }
+
+  void setHeight(float increment) {
+    objectHeight = increment;
+  }
+
+  float getWidth() {
+    return objectWidth;
+  }
+
+  float getHeight() {
+    return objectHeight;
+  }
+
 }
