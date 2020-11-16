@@ -1,0 +1,44 @@
+{"qrCodes": [
+  {
+    "offsetX": 62,
+    "offsetY": -92,
+    "ratioX": 1.249999761581421,
+    "qrID": "red",
+    "ratioY": 1.299999713897705
+  },
+  {
+    "offsetX": -2.5,
+    "offsetY": 21,
+    "ratioX": 1.0499999523162842,
+    "qrID": "green",
+    "ratioY": 1.000000238418579
+  },
+  {
+    "offsetX": 0,
+    "offsetY": 0,
+    "ratioX": 1,
+    "qrID": "blue",
+    "ratioY": 1
+  },
+  {
+    "offsetX": 0,
+    "offsetY": 0,
+    "ratioX": 1,
+    "qrID": "black",
+    "ratioY": 1
+  },
+  {
+    "offsetX": 0,
+    "offsetY": 0,
+    "ratioX": 1,
+    "qrID": "yellow",
+    "ratioY": 1
+  },
+  {
+    "offsetX": 0,
+    "offsetY": 0,
+    "ratioX": 1,
+    "qrID": "grey",
+    "ratioY": 1
+  }
+]}

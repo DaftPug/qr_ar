@@ -8,6 +8,8 @@
 
  */
 import java.util.*;
+/* import java.awt.event.KeyEvent; */
+import processing.event.*;
 // for Capture
 import processing.video.*;
 // for qrDetection
@@ -24,34 +26,44 @@ Capture cam;
 SimpleQrCode detector;
 // variable used to find contours
 SimpleGray gray;
+boolean showMenu = false;
+boolean keepStill = false;
 PImage imgContour;
 PImage imgBlobs;
 PImage input;
 PImage test;
 PImage saturated;
+PImage still;
 PShape ps;
 PGraphics pg;
 PGraphics bg;
 PGraphics cammi;
-ArrayList<PGraphics> graphics = new ArrayList<PGraphics>();
+PGraphics menu;
+ArrayList<PImage> stillQRs = new ArrayList<PImage>();
+/* ArrayList<PGraphics> graphics = new ArrayList<PGraphics>(); */
 HashMap<String, QRObject> qrArray;
+HashMap<String, QRObject> stillArray;
+
 int layerLimit;
 int debug = 0;
+int menuChoice = 0;
 String[] debugText = {""};
 StringDict debugInventory;
 
 void setup() {
-  size(1280, 480);
+  /* size(1280, 480); */
   /* size(640, 480, P3D); */
   debugInventory = new StringDict();
   qrArray = new HashMap<String, QRObject>();
+  stillArray = new HashMap<String, QRObject>();
   debug = 0;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
   initializeCamera(640, 480);
-  graphics.add(createGraphics(640,480));
+  /* graphics.add(createGraphics(640,480)); */
   /* pg = createGraphics(640, 480); */
   bg = createGraphics(640, 480);
+  menu = createGraphics(640, 480);
   /* cammi = createGraphics(640, 480); */
 
   if (debug > 0) {
@@ -61,19 +73,32 @@ void setup() {
   }
 
   detector = Boof.detectQR();
+  loadQRCodes();
 }
 
 void draw() {
-
-  /* pg.beginDraw(); */
+  if((keyPressed == true) && (key == 'c')) {
+    toggleMenu();
+  }
   if (cam.available() == true) {
     cam.read();
-    graphics.get(0).beginDraw();
-    saturated = Saturation.apply(cam, 0.05);
-    graphics.get(0).image(saturated, 0, 0);
-    image(graphics.get(0), 0, 0);
-    graphics.get(0).endDraw();
-
+    if (!showMenu) {
+      bg.beginDraw();
+      /* saturated = Saturation.apply(cam, 0.05); */
+      saturated = Grayscale.apply(cam);
+      still = saturated;
+      bg.image(saturated, 0, 0);
+      image(bg, 0, 0);
+      bg.endDraw();
+    } else {
+      menu.beginDraw();
+      if (!keepStill) {
+        still = Pixelation.apply(saturated, 10);
+      }
+      menu.image(still, 0, 0);
+      image(menu, 0, 0);
+      menu.endDraw();
+    }
     List<QrCode> found = detector.detect(cam);
 
 
@@ -83,28 +108,25 @@ void draw() {
     for ( QrCode qr : found ) {
 
       for ( int i = 0; i < qr.bounds.size(); i++ ) {
-        /* println("qr.bounds.get(i):      " + qr.bounds.get(i)); */
         bounds[i] = qr.bounds.get(i);
 
       }
-
-      if (qrArray.containsKey(qr.message)) {
-        QRObject temp = qrArray.get(qr.message);
-        /* temp.getGraphics().clear(); */
-        temp.updateQRPoints(bounds);
-        temp.drawObject();
-      } else {
-        qrArray.put(qr.message, new QRObject(qr.message, cam));
-        qrArray.get(qr.message).updateQRPoints(bounds);
-        qrArray.get(qr.message).drawObject();
-        println("qrobject [" + qr.message + "] found and created");
+      if (!showMenu) {
+        if (qrArray.containsKey(qr.message)) {
+          QRObject temp = qrArray.get(qr.message);
+          /* temp.getGraphics().clear(); */
+          temp.updateQRPoints(bounds);
+          temp.drawObject();
+        } else {
+          qrArray.put(qr.message, new QRObject(qr.message, cam));
+          qrArray.get(qr.message).updateQRPoints(bounds);
+          qrArray.get(qr.message).drawObject();
+          println("qrobject [" + qr.message + "] found and created");
+        }
       }
       if (debug > 0) {
         debugPrint(8);
-        /* printPoints(bounds, "bounds"); */
-        /* printPoints(newBounds, "newBounds"); */
         colorPoints(bounds);
-        /* colorPoints(newBounds); */
       }
       if (debug > 1) {
         String printpoints = "";
@@ -112,18 +134,147 @@ void draw() {
           printpoints = printpoints + bounds[j].toString();
         };
         debugInventory.set("bounds: ", printpoints);
-        /* println("bounds:"); */
-        /* println(bounds); */
       }
     if (!qrArray.isEmpty()) {
 
-      image(qrArray.get(qr.message).getGraphics(), 0, 0);
-    }
-      noStroke();
+      if (!showMenu) {
+        image(qrArray.get(qr.message).getGraphics(), 0, 0);
+      } else {
+        if (!keepStill) {
+          stillArray.put(qr.message, qrArray.get(qr.message));
+          stillQRs.add(qrArray.get(qr.message).getGraphics());
+          image(qrArray.get(qr.message).getGraphics(), 0, 0);
+        }
+      }
     }
 
+    noStroke();
+    }
+    if (showMenu) {
+      if (!keepStill) {
+        keepStill = true;
+      }
+      if (keepStill) {
+        if (!stillQRs.isEmpty()) {
+          for (int i = 0; i < stillQRs.size(); i++) {
+            image(stillQRs.get(i), 0, 0);
+          };
+        }
+        if (!stillArray.isEmpty()) {
+          String[] choices = stillArray.keySet().toArray(new String[stillArray.size()]);
+          QRObject chosen = stillArray.get(choices[menuChoice]);
+          float chosenWidth = chosen.getWidth();
+          float chosenHeight = chosen.getHeight();
+          float chosenRatioX = chosen.getRatioX();
+          float chosenRatioY = chosen.getRatioY();
+          float chosenOffsetX = chosen.getOffsetX();
+          float chosenOffsetY = chosen.getOffsetY();
+          float[] chosenCenter = chosen.getCenter();
+          float chosenAngle = chosen.getAngle();
+
+          if (stillArray.size() > 1) {
+            if ((keyPressed == true) && (key == 'p')) {
+              menuChoice++;
+              if (menuChoice == stillArray.size()) {
+                menuChoice = 0;
+              }
+            }
+
+            if ((keyPressed == true) && (key == 'o')) {
+              menuChoice = menuChoice - 1;
+              if (menuChoice < 0) {
+                menuChoice = stillArray.size() - 1;
+              }
+            }
+          }
+          // Change the size of the rectangle
+          if ((keyPressed == true) && (key == CODED)) {
+            if (keyCode == UP) {
+              chosenRatioY += 0.05;
+              chosen.setRatioY(chosenRatioY);
+            }
+            if (keyCode == DOWN) {
+              chosenRatioY -= 0.05;
+              chosen.setRatioY(chosenRatioY);
+            }
+            if (keyCode == LEFT) {
+              chosenRatioX -= 0.05;
+              chosen.setRatioX(chosenRatioX);
+            }
+            if (keyCode == RIGHT) {
+              chosenRatioX += 0.05;
+              chosen.setRatioX(chosenRatioX);
+            }
+          }
+
+          // move the rectangle
+          if ((keyPressed == true) && (key == 'w')) {
+            chosenOffsetY += 0.5;
+            chosen.setOffsetY(chosenOffsetY);
+          }
+          if ((keyPressed == true) && (key == 's')) {
+            chosenOffsetY -= 0.5;
+            chosen.setOffsetY(chosenOffsetY);
+          }
+          if ((keyPressed == true) && (key == 'a')) {
+            chosenOffsetX -= 0.5;
+            chosen.setOffsetX(chosenOffsetX);
+          }
+          if ((keyPressed == true) && (key == 'd')) {
+            chosenOffsetX += 0.5;
+            chosen.setOffsetX(chosenOffsetX);
+          }
+
+          if ((keyPressed == true) && (key == 'x')) {
+            String id = chosen.getId();
+            qrArray.get(id).setRatioX(chosenRatioX);
+            qrArray.get(id).setRatioY(chosenRatioY);
+            qrArray.get(id).setOffsetX(chosenOffsetX);
+            qrArray.get(id).setOffsetY(chosenOffsetY);
+          }
+          strokeWeight(5);
+          stroke(80, 100, 0);
+          pushMatrix();
+          translate(chosenCenter[0], chosenCenter[1]);
+          rotate(chosenAngle);
+          rectMode(CENTER);
+          fill(255, 0);
+          rect(0 + chosenOffsetX, 0 + chosenOffsetY, chosenWidth * chosenRatioX, chosenHeight * chosenRatioY);
+          noFill();
+          popMatrix();
+        }
+
+      }
+    }
+
+  // end of if (cam.available) {}
   }
+  // end of draw()
+}
 
+void drawMenu() {
+
+}
+
+void toggleStill() {
+  if (keepStill) {
+    keepStill = false;
+  } else {
+    keepStill = true;
+  }
+}
+
+void toggleMenu() {
+  if (showMenu) {
+    saveQRCodes();
+    toggleStill();
+    showMenu = false;
+  } else {
+    menuChoice = 0;
+    stillArray = new HashMap<String, QRObject>();
+    stillQRs = new ArrayList<PImage>();
+    showMenu = true;
+  }
 }
 
 void saveQRCodes() {
@@ -164,6 +315,7 @@ void loadQRCodes() {
 
   };
 }
+
 void drawVertices(Point2D_F64[] bounds, Point2D_F64[] newBounds) {
   // Draw a line around each detected QR Code
   beginShape();
@@ -309,9 +461,11 @@ class QRObject {
   // println(UUID.randomUUID().toString());
   String qrId;
   Point2D_F64[] qrPoints;
+  Point2D_F64 center;
   Capture cam;
   float objectWidth;
   float objectHeight;
+  float avr_angle;
   PGraphics cammie;
   PGraphics mask;
   float ratioX = 1.0;
@@ -334,11 +488,11 @@ class QRObject {
     Point2D_F64 b = qrPoints[1];
     Point2D_F64 c = qrPoints[2];
     Point2D_F64 d = qrPoints[3];
-    Point2D_F64 center = qrCenter(qrPoints);
+    center = qrCenter(qrPoints);
     float angle_one = atanifier(a, b);
     float angle_two = atanifier(d, c);
     // they might differ slightly due to viewing angle, so using the average angle to semi-account for this
-    float avr_angle = (angle_one + angle_two) / 2;
+    avr_angle = (angle_one + angle_two) / 2;
     /* int token = graphics.size() - 1; */
     cammie.beginDraw();
     cam.read();
@@ -470,5 +624,16 @@ class QRObject {
 
   void setOffsetY(float offset) {
     offsetY = offset;
+  }
+
+  float[] getCenter() {
+    float x = (float)center.x;
+    float y = (float)center.y;
+    float[] xy = {x, y};
+    return xy;
+  }
+
+  float getAngle() {
+    return avr_angle;
   }
 }
