@@ -37,11 +37,14 @@ PImage still;
 PShape ps;
 PGraphics pg;
 PGraphics bg;
-PGraphics cammi;
 PGraphics menu;
+PGraphics mask;
+PGraphics cammie;
+File tempFile;
 ArrayList<PImage> stillQRs = new ArrayList<PImage>();
 /* ArrayList<PGraphics> graphics = new ArrayList<PGraphics>(); */
 HashMap<String, QRObject> qrArray;
+HashMap<String, QRObject> foundQrs;
 HashMap<String, QRObject> stillArray;
 
 int layerLimit;
@@ -56,6 +59,7 @@ void setup() {
   debugInventory = new StringDict();
   qrArray = new HashMap<String, QRObject>();
   stillArray = new HashMap<String, QRObject>();
+  foundQrs = new HashMap<String, QRObject>();
   debug = 0;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
@@ -64,6 +68,8 @@ void setup() {
   /* pg = createGraphics(640, 480); */
   bg = createGraphics(640, 480);
   menu = createGraphics(640, 480);
+  cammie = createGraphics(640, 480);
+  mask = createGraphics(640, 480);
   /* cammi = createGraphics(640, 480); */
 
   if (debug > 0) {
@@ -100,7 +106,7 @@ void draw() {
       menu.endDraw();
     }
     List<QrCode> found = detector.detect(cam);
-
+    foundQrs.clear();
 
     Point2D_F64[] bounds = new Point2D_F64[4];
 
@@ -116,10 +122,14 @@ void draw() {
           QRObject temp = qrArray.get(qr.message);
           /* temp.getGraphics().clear(); */
           temp.updateQRPoints(bounds);
+          foundQrs.put(qr.message, temp);
           temp.drawObject();
         } else {
-          qrArray.put(qr.message, new QRObject(qr.message, cam));
-          qrArray.get(qr.message).updateQRPoints(bounds);
+          QRObject temp = new QRObject(qr.message, cam);
+          qrArray.put(qr.message, temp);
+          temp.updateQRPoints(bounds);
+          /* qrArray.get(qr.message).updateQRPoints(bounds); */
+          foundQrs.put(qr.message, temp);
           qrArray.get(qr.message).drawObject();
           println("qrobject [" + qr.message + "] found and created");
         }
@@ -135,20 +145,19 @@ void draw() {
         };
         debugInventory.set("bounds: ", printpoints);
       }
-    if (!qrArray.isEmpty()) {
+      if (!qrArray.isEmpty()) {
+        if (!showMenu) {
+          /* image(qrArray.get(qr.message).getGraphics(), 0, 0); */
 
-      if (!showMenu) {
-        image(qrArray.get(qr.message).getGraphics(), 0, 0);
-      } else {
-        if (!keepStill) {
-          stillArray.put(qr.message, qrArray.get(qr.message));
-          stillQRs.add(qrArray.get(qr.message).getGraphics());
-          image(qrArray.get(qr.message).getGraphics(), 0, 0);
+        } else {
+          if (!keepStill) {
+            stillArray.put(qr.message, qrArray.get(qr.message));
+            stillQRs.add(qrArray.get(qr.message).getGraphics());
+            /* image(qrArray.get(qr.message).getGraphics(), 0, 0); */
+          }
         }
       }
-    }
-
-    noStroke();
+      noStroke();
     }
     if (showMenu) {
       if (!keepStill) {
@@ -232,24 +241,62 @@ void draw() {
             qrArray.get(id).setOffsetX(chosenOffsetX);
             qrArray.get(id).setOffsetY(chosenOffsetY);
           }
+          chosen.updateWidthAndHeight();
           strokeWeight(5);
-          stroke(80, 100, 0);
+          stroke(255, 233, 0);
           pushMatrix();
           translate(chosenCenter[0], chosenCenter[1]);
           rotate(chosenAngle);
           rectMode(CENTER);
           fill(255, 0);
-          rect(0 + chosenOffsetX, 0 + chosenOffsetY, chosenWidth * chosenRatioX, chosenHeight * chosenRatioY);
+          rect(0 + chosenOffsetX, 0 + chosenOffsetY, chosen.getWidth(), chosen.getHeight());
           noFill();
           popMatrix();
         }
 
       }
+    } else {
+      cam.read();
+      cammie.beginDraw();
+      cammie.image(cam, 0, 0);
+      mask.beginDraw();
+      mask.noStroke();
+      mask.rectMode(CENTER);
+      drawQRs(foundQrs, mask);
+      mask.endDraw();
+      cammie.mask(mask);
+      mask.clear();
+      image(cammie, 0, 0);
+      cammie.clear();
     }
 
   // end of if (cam.available) {}
   }
   // end of draw()
+}
+
+void drawQRs(HashMap<String, QRObject> QRs, PGraphics mask) {
+  if (!QRs.isEmpty()) {
+
+    String[] qrKeys = QRs.keySet().toArray(new String[QRs.size()]);
+    for (int i = 0; i < QRs.size(); i++) {
+      QRObject temp = QRs.get(qrKeys[i]);
+      float offsetX = temp.getOffsetX();
+      float offsetY = temp.getOffsetY();
+      float[] center = temp.getCenter();
+      float angle = temp.getAngle();
+      float qrWidth = temp.getWidth();
+      float qrHeight = temp.getHeight();
+      mask.pushMatrix();
+      mask.translate(center[0], center[1]);
+      mask.rotate(angle);
+      /* float distance = qrDistance(a, b); */
+      /* objectWidth = distance * ratioX; */
+      /* objectHeight = distance * ratioY; */
+      mask.rect(0 + offsetX, 0 + offsetY, qrWidth, qrHeight);
+      mask.popMatrix();
+    };
+  }
 }
 
 void drawMenu() {
@@ -299,21 +346,29 @@ void saveQRCodes() {
 }
 
 void loadQRCodes() {
-  JSONObject json = loadJSONObject("qrcodes.json");
-  JSONArray values = json.getJSONArray("qrCodes");
-
-  for (int i = 0; i < values.size(); i++) {
-    JSONObject qrCode = values.getJSONObject(i);
-    if (!qrArray.containsKey(qrCode.getString("qrID"))) {
-      QRObject temp = new QRObject(qrCode.getString("qrID"), cam);
-      temp.setRatioX(qrCode.getFloat("ratioX"));
-      temp.setRatioY(qrCode.getFloat("ratioY"));
-      temp.setOffsetX(qrCode.getFloat("offsetX"));
-      temp.setOffsetY(qrCode.getFloat("offsetY"));
-      qrArray.put(temp.getId(), temp);
+    try {
+      println("[!] Loading QR codes");
+      JSONObject json = loadJSONObject("qrcodes.json");
+      JSONArray values = json.getJSONArray("qrCodes");
+      println("[!] " + values.size() + " QR codes found");
+      for (int i = 0; i < values.size(); i++) {
+        JSONObject qrCode = values.getJSONObject(i);
+          if (!qrArray.containsKey(qrCode.getString("qrID"))) {
+            QRObject temp = new QRObject(qrCode.getString("qrID"), cam);
+            temp.setRatioX(qrCode.getFloat("ratioX"));
+            temp.setRatioY(qrCode.getFloat("ratioY"));
+            temp.setOffsetX(qrCode.getFloat("offsetX"));
+            temp.setOffsetY(qrCode.getFloat("offsetY"));
+            qrArray.put(temp.getId(), temp);
+          }
+      };
+    } catch(NullPointerException e) {
+      println("No file named qrcodes.json found");
+      e.printStackTrace();
     }
 
-  };
+
+
 }
 
 void drawVertices(Point2D_F64[] bounds, Point2D_F64[] newBounds) {
@@ -419,7 +474,6 @@ void colorPoints(Point2D_F64[] points) {
 
 }
 
-
 float checkPi(float angle) {
   angle = angle + PI;
   if (angle > 2*PI) {
@@ -438,7 +492,6 @@ double checkEdge(double p, double edge) {
   }
   return p;
 }
-
 
 void initializeCamera( int desiredWidth, int desiredHeight ) {
   String[] cameras = Capture.list();
@@ -499,7 +552,6 @@ class QRObject {
     cammie.image(cam, 0, 0);
     mask.beginDraw();
     mask.noStroke();
-    /* bg.quad((float)a.x, (float)a.y, (float)b.x, (float)b.y, (float)c.x, (float)c.y, (float)d.x, (float)d.y); */
     mask.rectMode(CENTER);
     mask.pushMatrix();
     mask.translate((float)center.x, (float)center.y);
@@ -508,6 +560,7 @@ class QRObject {
     objectWidth = distance * ratioX;
     objectHeight = distance * ratioY;
     mask.rect(0, 0, objectWidth, objectHeight);
+    /* mask.rect(200, 0, objectWidth, objectHeight); */
     mask.popMatrix();
     mask.endDraw();
     cammie.endDraw();
@@ -517,6 +570,15 @@ class QRObject {
 
   void updateQRPoints(Point2D_F64[] newPoints) {
     qrPoints = newPoints;
+    center = qrCenter(qrPoints);
+  }
+
+  void updateWidthAndHeight() {
+    Point2D_F64 a = qrPoints[0];
+    Point2D_F64 b = qrPoints[1];
+    float distance = qrDistance(a, b);
+    objectWidth = distance * ratioX;
+    objectHeight = distance * ratioY;
   }
 
   float atanifier(Point2D_F64 a, Point2D_F64 b) {
@@ -555,9 +617,11 @@ class QRObject {
     Point2D_F64 center = new Point2D_F64(sumX, sumY);
     return center;
   }
+
   void increaseWidth() {
     ratioX += 0.05;
   }
+
   void increaseWidth(float increment) {
     ratioX += increment;
   }
@@ -629,7 +693,11 @@ class QRObject {
   float[] getCenter() {
     float x = (float)center.x;
     float y = (float)center.y;
+    println("x:" + x);
+    println("y:" + y);
     float[] xy = {x, y};
+
+    println("xy:" + xy);
     return xy;
   }
 

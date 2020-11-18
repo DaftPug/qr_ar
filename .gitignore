@@ -9,3 +9,10 @@ application.windows64
 application.macosx
 out
 *.log
+*.class
+*.java
+tmp/
+
+tmp/qr_ar.class
+tmp/source/qr_ar.java
+_bu_qrcodes.json

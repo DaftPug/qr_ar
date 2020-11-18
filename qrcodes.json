@@ -1,17 +1,17 @@
 {"qrCodes": [
   {
-    "offsetX": 62,
-    "offsetY": -92,
-    "ratioX": 1.249999761581421,
+    "offsetX": -63,
+    "offsetY": 7.5,
+    "ratioX": 0.5499998331069946,
     "qrID": "red",
-    "ratioY": 1.299999713897705
+    "ratioY": 2.899998188018799
   },
   {
-    "offsetX": -2.5,
+    "offsetX": -9.5,
     "offsetY": 21,
-    "ratioX": 1.0499999523162842,
+    "ratioX": 2.2499988079071045,
     "qrID": "green",
-    "ratioY": 1.000000238418579
+    "ratioY": 5.800004005432129
   },
   {
     "offsetX": 0,
