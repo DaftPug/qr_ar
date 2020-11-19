@@ -18,9 +18,14 @@ import boofcv.struct.image.*;
 import boofcv.alg.fiducial.qrcode.QrCode;
 // for saturation;
 import milchreis.imageprocessing.*;
-//for Polygon2D_F64 points and shapes
+// for Polygon2D_F64 points and shapes
 import georegression.struct.shapes.Polygon2D_F64;
 import georegression.struct.point.Point2D_F64;
+// for particles
+import shiffman.box2d.*;
+import org.jbox2d.collision.shapes.*;
+import org.jbox2d.common.*;
+import org.jbox2d.dynamics.*;
 
 Capture cam;
 SimpleQrCode detector;
@@ -28,6 +33,7 @@ SimpleQrCode detector;
 SimpleGray gray;
 boolean showMenu = false;
 boolean keepStill = false;
+boolean tutorial = false;
 PImage imgContour;
 PImage imgBlobs;
 PImage input;
@@ -47,6 +53,18 @@ HashMap<String, QRObject> qrArray;
 HashMap<String, QRObject> foundQrs;
 HashMap<String, QRObject> stillArray;
 
+// Particle variables
+// A reference to our box2d world
+Box2DProcessing box2d;
+
+// A list we'll use to track fixed objects
+ArrayList<Boundary> boundaries;
+/* PImage bg; */
+// A list for all particle systems
+ArrayList<ParticleSystem> systems;
+
+// Particle variables end
+
 int layerLimit;
 int debug = 0;
 int menuChoice = 0;
@@ -54,8 +72,27 @@ String[] debugText = {""};
 StringDict debugInventory;
 
 void setup() {
+  frameRate(60);
+
   /* size(1280, 480); */
   /* size(640, 480, P3D); */
+  /* size(640,480); */
+  size(1280, 720);
+  smooth();
+
+  // Initialize box2d physics and create the world
+  box2d = new Box2DProcessing(this);
+  box2d.createWorld();
+
+  // We are setting a custom gravity
+  /* box2d.setGravity(30, -60); */
+  box2d.setGravity(0, 0);
+
+
+  // Create ArrayLists
+  systems = new ArrayList<ParticleSystem>();
+  boundaries = new ArrayList<Boundary>();
+
   debugInventory = new StringDict();
   qrArray = new HashMap<String, QRObject>();
   stillArray = new HashMap<String, QRObject>();
@@ -63,13 +100,18 @@ void setup() {
   debug = 0;
   /* size(1280, 480); */
   // Open up the camera so that it has a video feed to process
-  initializeCamera(640, 480);
+  /* initializeCamera(640, 480); */
+  initializeCamera(1280, 720);
   /* graphics.add(createGraphics(640,480)); */
   /* pg = createGraphics(640, 480); */
-  bg = createGraphics(640, 480);
-  menu = createGraphics(640, 480);
-  cammie = createGraphics(640, 480);
-  mask = createGraphics(640, 480);
+  /* bg = createGraphics(640, 480); */
+  bg = createGraphics(1280, 720);
+  /* menu = createGraphics(640, 480); */
+  menu = createGraphics(1280, 720);
+  /* cammie = createGraphics(640, 480); */
+  cammie = createGraphics(1280, 720);
+  /* mask = createGraphics(640, 480); */
+  mask = createGraphics(1280, 720);
   /* cammi = createGraphics(640, 480); */
 
   if (debug > 0) {
@@ -86,28 +128,71 @@ void draw() {
   if((keyPressed == true) && (key == 'c')) {
     toggleMenu();
   }
+  if((keyPressed == true) && (key == 't')) {
+    toggleTest();
+  }
+
+  box2d.step();
+  box2d.step();
+  box2d.step();
   if (cam.available() == true) {
     cam.read();
     if (!showMenu) {
       bg.beginDraw();
       /* saturated = Saturation.apply(cam, 0.05); */
       saturated = Grayscale.apply(cam);
+      /* if (foundQrs.size() > 0) { */
+      /*   saturated = Pixelation.apply(saturated, 15); */
+      /* } */
       still = saturated;
       bg.image(saturated, 0, 0);
       image(bg, 0, 0);
       bg.endDraw();
     } else {
-      menu.beginDraw();
-      if (!keepStill) {
-        still = Pixelation.apply(saturated, 10);
+      if (!tutorial) {
+        menu.beginDraw();
+        if (!keepStill) {
+          still = Pixelation.apply(saturated, 10);
+        }
+        menu.image(still, 0, 0);
+        image(menu, 0, 0);
+        menu.endDraw();
+      } else {
+        menu.beginDraw();
+        menu.image(still, 0, 0);
+        image(menu, 0, 0);
+        menu.endDraw();
       }
-      menu.image(still, 0, 0);
-      image(menu, 0, 0);
-      menu.endDraw();
     }
     List<QrCode> found = detector.detect(cam);
     foundQrs.clear();
 
+    if (found.size() > 0 || tutorial) {
+
+      // Run all the particle systems
+      for (ParticleSystem system: systems) {
+        system.run();
+
+        //int n = (int) random(0,2);
+        /* system.addParticles(1); */
+      }
+
+      // Display all the boundaries
+      /* for (Boundary wall: boundaries) { */
+      /*   wall.display(); */
+      /* } */
+    } else {
+      if (!tutorial) {
+        while(!boundaries.isEmpty()) {
+          boundaries.remove(0);
+        }
+        /* boundaries.clear(); */
+        while(!systems.isEmpty()) {
+          systems.remove(0);
+        }
+      }
+      /* systems.clear(); */
+    }
     Point2D_F64[] bounds = new Point2D_F64[4];
 
     // The QR codes being tested have a height and width of 42
@@ -160,7 +245,7 @@ void draw() {
       noStroke();
     }
     if (showMenu) {
-      if (!keepStill) {
+      if (!keepStill && !tutorial) {
         keepStill = true;
       }
       if (keepStill) {
@@ -255,6 +340,53 @@ void draw() {
         }
 
       }
+        if (tutorial) {
+          if (!stillQRs.isEmpty() && !stillArray.isEmpty()) {
+
+            String[] choices = stillArray.keySet().toArray(new String[stillArray.size()]);
+            for (int i = 0; i < stillArray.size(); i++) {
+
+              QRObject temp = stillArray.get(choices[i]);
+              image(stillQRs.get(i), 0, 0);
+              float offsetX = temp.getOffsetX();
+              float offsetY = temp.getOffsetY();
+              float[] center = temp.getCenter();
+              float angle = temp.getAngle();
+              float qrWidth = temp.getWidth();
+              float qrHeight = temp.getHeight();
+              boundaries.add(new Boundary(center[0] + offsetX, center[1] + offsetY, qrWidth, qrHeight, 0));
+
+              float diffX = center[0]/10 + qrWidth/2;
+              float diffY = center[1]/10 + qrHeight/2;
+              systems.add(new ParticleSystem(2, new PVector(center[0] - diffX, center[1] - diffY)));
+              systems.add(new ParticleSystem(2, new PVector(center[0] + diffX, center[1] - diffY)));
+            };
+          }
+          /* if (!stillArray.isEmpty()) { */
+          /*   String[] choices = stillArray.keySet().toArray(new String[stillArray.size()]); */
+          /*   QRObject chosen = stillArray.get(choices[menuChoice]); */
+          /*   float chosenWidth = chosen.getWidth(); */
+          /*   float chosenHeight = chosen.getHeight(); */
+          /*   float chosenRatioX = chosen.getRatioX(); */
+          /*   float chosenRatioY = chosen.getRatioY(); */
+          /*   float chosenOffsetX = chosen.getOffsetX(); */
+          /*   float chosenOffsetY = chosen.getOffsetY(); */
+          /*   float[] chosenCenter = chosen.getCenter(); */
+          /*   float chosenAngle = chosen.getAngle(); */
+          /*   chosen.updateWidthAndHeight(); */
+          /*   strokeWeight(5); */
+          /*   stroke(255, 233, 0); */
+          /*   pushMatrix(); */
+          /*   translate(chosenCenter[0], chosenCenter[1]); */
+          /*   rotate(chosenAngle); */
+          /*   rectMode(CENTER); */
+          /*   fill(255, 0); */
+          /*   rect(0 + chosenOffsetX, 0 + chosenOffsetY, chosen.getWidth(), chosen.getHeight()); */
+          /*   noFill(); */
+          /*   popMatrix(); */
+
+        /* } */
+      }
     } else {
       cam.read();
       cammie.beginDraw();
@@ -295,12 +427,39 @@ void drawQRs(HashMap<String, QRObject> QRs, PGraphics mask) {
       /* objectHeight = distance * ratioY; */
       mask.rect(0 + offsetX, 0 + offsetY, qrWidth, qrHeight);
       mask.popMatrix();
+
+      boundaries.add(new Boundary(center[0] + offsetX, center[1] + offsetY, qrWidth, qrHeight, 0));
+
+      /* systems.add(new ParticleSystem(1, new PVector(center[0] - (qrWidth + 5), center[1] - (qrHeight + 5)))); */
+
+      /* box2d.setGravity(30, -30); */
+      /* systems.add(new ParticleSystem(1, new PVector(0, 0))); */
+      float diffX = center[0]/10 + qrWidth/2;
+      float diffY = center[1]/10 + qrHeight/2;
+      systems.add(new ParticleSystem(2, new PVector(center[0] - diffX, center[1] - diffY)));
+      /* box2d.setGravity(0, -30); */
+      systems.add(new ParticleSystem(2, new PVector(center[0] + diffX, center[1] - diffY)));
+      /* systems.add(new ParticleSystem(1, new PVector(center[0] + diffX, center[1] - diffY))); */
+      /* systems.add(new ParticleSystem(1, new PVector(center[0] + diffX, center[1] + diffX))); */
+      /* box2d.setGravity(-30, -30); */
+      /* systems.add(new ParticleSystem(1, new PVector(0, width))); */
     };
   }
 }
 
-void drawMenu() {
-
+void toggleTest() {
+  if (tutorial) {
+    saveQRCodes();
+    /* toggleStill(); */
+    showMenu = false;
+    tutorial = false;
+  } else {
+    menuChoice = 0;
+    stillArray = new HashMap<String, QRObject>();
+    stillQRs = new ArrayList<PImage>();
+    showMenu = true;
+    tutorial = true;
+  }
 }
 
 void toggleStill() {
@@ -495,213 +654,16 @@ double checkEdge(double p, double edge) {
 
 void initializeCamera( int desiredWidth, int desiredHeight ) {
   String[] cameras = Capture.list();
-  /* for (int i = 0; i < cameras.length; i++) { */
-  /*   println("[" + i + "] " + cameras[i]); */
-  /* }; */
+  for (int i = 0; i < cameras.length; i++) {
+    println("[" + i + "] " + cameras[i]);
+  };
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
   } else {
     /* cam = new Capture(this, desiredWidth, desiredHeight, 30); */
-    cam = new Capture(this, desiredWidth, desiredHeight);
+    /* cam = new Capture(this, desiredWidth, desiredHeight, "HP Webcam 1300"); */
+    cam = new Capture(this, desiredWidth, desiredHeight, cameras[2]);
     cam.start();
-  }
-}
-
-class QRObject {
-  // to create unique ID's
-  // import java.util.UUID;
-  // println(UUID.randomUUID().toString());
-  String qrId;
-  Point2D_F64[] qrPoints;
-  Point2D_F64 center;
-  Capture cam;
-  float objectWidth;
-  float objectHeight;
-  float avr_angle;
-  PGraphics cammie;
-  PGraphics mask;
-  float ratioX = 1.0;
-  float ratioY = 1.0;
-  float offsetX = 0.0;
-  float offsetY = 0.0;
-
-
-  QRObject(String id, Capture camera) {
-    qrId = id;
-    cam = camera;
-    /* objectWidth = 100.0; */
-    /* objectHeight = 100.0; */
-    cammie = createGraphics(640, 480);
-    mask = createGraphics(640, 480);
-  }
-
-  void drawObject() {
-    Point2D_F64 a = qrPoints[0];
-    Point2D_F64 b = qrPoints[1];
-    Point2D_F64 c = qrPoints[2];
-    Point2D_F64 d = qrPoints[3];
-    center = qrCenter(qrPoints);
-    float angle_one = atanifier(a, b);
-    float angle_two = atanifier(d, c);
-    // they might differ slightly due to viewing angle, so using the average angle to semi-account for this
-    avr_angle = (angle_one + angle_two) / 2;
-    /* int token = graphics.size() - 1; */
-    cammie.beginDraw();
-    cam.read();
-    cammie.image(cam, 0, 0);
-    mask.beginDraw();
-    mask.noStroke();
-    mask.rectMode(CENTER);
-    mask.pushMatrix();
-    mask.translate((float)center.x, (float)center.y);
-    mask.rotate(avr_angle);
-    float distance = qrDistance(a, b);
-    objectWidth = distance * ratioX;
-    objectHeight = distance * ratioY;
-    mask.rect(0, 0, objectWidth, objectHeight);
-    /* mask.rect(200, 0, objectWidth, objectHeight); */
-    mask.popMatrix();
-    mask.endDraw();
-    cammie.endDraw();
-    cammie.mask(mask);
-    mask.clear();
-  }
-
-  void updateQRPoints(Point2D_F64[] newPoints) {
-    qrPoints = newPoints;
-    center = qrCenter(qrPoints);
-  }
-
-  void updateWidthAndHeight() {
-    Point2D_F64 a = qrPoints[0];
-    Point2D_F64 b = qrPoints[1];
-    float distance = qrDistance(a, b);
-    objectWidth = distance * ratioX;
-    objectHeight = distance * ratioY;
-  }
-
-  float atanifier(Point2D_F64 a, Point2D_F64 b) {
-    float x1 = (float)a.getX();
-    float y1 = (float)a.getY();
-    float x2 = (float)b.getX();
-    float y2 = (float)b.getY();
-    float y = y2 - y1;
-    float x = x2 - x1;
-    float rad = atan2(y,x);// + HALF_PI;
-    return rad;
-  }
-
-  float qrDistance(Point2D_F64 a, Point2D_F64 b) {
-    float x1 = (float)a.getX();
-    float y1 = (float)a.getY();
-    float x2 = (float)b.getX();
-    float y2 = (float)b.getY();
-    float distance = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
-    return distance;
-  }
-
-  Point2D_F64 qrCenter(Point2D_F64[] points) {
-    // Because it's a square, you can find the center by taking the average of the x coordinates
-    // of the corners, and then take the average of the y coordinates of the corners.
-    // This will give you the x and y coordinates of the center of the square.
-    // I believe this also works for rectangles.
-    float sumX = 0.0;
-    float sumY = 0.0;
-    for (int i = 0; i < points.length; i++) {
-      sumX = sumX + (float)points[i].x;
-      sumY = sumY + (float)points[i].y;
-    };
-    sumX = sumX / 4;
-    sumY = sumY / 4;
-    Point2D_F64 center = new Point2D_F64(sumX, sumY);
-    return center;
-  }
-
-  void increaseWidth() {
-    ratioX += 0.05;
-  }
-
-  void increaseWidth(float increment) {
-    ratioX += increment;
-  }
-
-  void increaseHeight() {
-    ratioY += 0.05;
-  }
-
-  void increaseHeight(float increment) {
-    ratioY += increment;
-  }
-
-  void setWidth(float increment) {
-    ratioX = increment;
-  }
-
-  void setHeight(float increment) {
-    ratioY = increment;
-  }
-
-  float getWidth() {
-    return objectWidth;
-  }
-
-  float getHeight() {
-    return objectHeight;
-  }
-
-  PGraphics getGraphics() {
-    return cammie;
-  }
-
-  String getId() {
-    return qrId;
-  }
-
-  float getRatioX() {
-    return ratioX;
-  }
-
-  float getRatioY() {
-    return ratioY;
-  }
-
-  void setRatioX(float ratio) {
-    ratioX = ratio;
-  }
-
-  void setRatioY(float ratio) {
-    ratioY = ratio;
-  }
-
-  float getOffsetX() {
-    return offsetX;
-  }
-
-  float getOffsetY() {
-    return offsetY;
-  }
-
-  void setOffsetX(float offset) {
-    offsetX = offset;
-  }
-
-  void setOffsetY(float offset) {
-    offsetY = offset;
-  }
-
-  float[] getCenter() {
-    float x = (float)center.x;
-    float y = (float)center.y;
-    println("x:" + x);
-    println("y:" + y);
-    float[] xy = {x, y};
-
-    println("xy:" + xy);
-    return xy;
-  }
-
-  float getAngle() {
-    return avr_angle;
   }
 }
