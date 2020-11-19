@@ -59,9 +59,32 @@ class QRObject {
     mask.clear();
   }
 
+
+  void qrParticles(ArrayList<Boundary> boundaries, ArrayList<ParticleSystem> systems) {
+    float cX = (float)center.x;
+    float cY = (float)center.y;
+    boundaries.add(new Boundary(cX + offsetX, cY + offsetY, objectWidth, objectHeight, 0));
+
+    float diffX = cX/10 + objectWidth/2;
+    float diffY = cY/10 + objectHeight/2;
+    systems.add(new ParticleSystem(2, new PVector(cX - diffX, cY - diffY)));
+    systems.add(new ParticleSystem(2, new PVector(cX + diffX, cY - diffY)));
+  }
+
+  void qrMask(PGraphics mask) {
+    float cX = (float)center.x;
+    float cY = (float)center.y;
+    mask.pushMatrix();
+    mask.translate(cX, cY);
+    mask.rotate(getAngle());
+    mask.rect(0 + offsetX, 0 + offsetY, objectWidth, objectWidth);
+    mask.popMatrix();
+  }
+
   void updateQRPoints(Point2D_F64[] newPoints) {
     qrPoints = newPoints;
     center = qrCenter(qrPoints);
+    updateWidthAndHeight();
   }
 
   void updateWidthAndHeight() {
@@ -193,7 +216,16 @@ class QRObject {
   }
 
   float getAngle() {
-    return avr_angle;
+    Point2D_F64 a = qrPoints[0];
+    Point2D_F64 b = qrPoints[1];
+    Point2D_F64 c = qrPoints[2];
+    Point2D_F64 d = qrPoints[3];
+    center = qrCenter(qrPoints);
+    float angle_one = atanifier(a, b);
+    float angle_two = atanifier(d, c);
+    // they might differ slightly due to viewing angle, so using the average angle to semi-account for this
+    float new_angle = (angle_one + angle_two) / 2;
+    return new_angle;
   }
 
 }

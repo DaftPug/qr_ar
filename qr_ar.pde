@@ -77,7 +77,7 @@ void setup() {
   /* size(1280, 480); */
   /* size(640, 480, P3D); */
   /* size(640,480); */
-  size(1280, 720);
+  size(640, 480);
   smooth();
 
   // Initialize box2d physics and create the world
@@ -98,21 +98,8 @@ void setup() {
   stillArray = new HashMap<String, QRObject>();
   foundQrs = new HashMap<String, QRObject>();
   debug = 0;
-  /* size(1280, 480); */
-  // Open up the camera so that it has a video feed to process
-  /* initializeCamera(640, 480); */
-  initializeCamera(1280, 720);
-  /* graphics.add(createGraphics(640,480)); */
-  /* pg = createGraphics(640, 480); */
-  /* bg = createGraphics(640, 480); */
-  bg = createGraphics(1280, 720);
-  /* menu = createGraphics(640, 480); */
-  menu = createGraphics(1280, 720);
-  /* cammie = createGraphics(640, 480); */
-  cammie = createGraphics(1280, 720);
-  /* mask = createGraphics(640, 480); */
-  mask = createGraphics(1280, 720);
-  /* cammi = createGraphics(640, 480); */
+
+  initializeGraphics(width, height);
 
   if (debug > 0) {
     surface.setSize(cam.width*2, cam.height);
@@ -122,6 +109,20 @@ void setup() {
 
   detector = Boof.detectQR();
   loadQRCodes();
+}
+
+void initializeGraphics(int x, int y) {
+  initializeCamera(x, y);
+  /* graphics.add(createGraphics(640,480)); */
+  /* pg = createGraphics(640, 480); */
+  /* bg = createGraphics(640, 480); */
+  bg = createGraphics(x, y);
+  /* menu = createGraphics(640, 480); */
+  menu = createGraphics(x, y);
+  /* cammie = createGraphics(640, 480); */
+  cammie = createGraphics(x, y);
+  /* mask = createGraphics(640, 480); */
+  mask = createGraphics(x, y);
 }
 
 void draw() {
@@ -202,27 +203,28 @@ void draw() {
         bounds[i] = qr.bounds.get(i);
 
       }
+      QRObject temp;
       if (!showMenu) {
         if (qrArray.containsKey(qr.message)) {
-          QRObject temp = qrArray.get(qr.message);
-          /* temp.getGraphics().clear(); */
+          temp = qrArray.get(qr.message);
           temp.updateQRPoints(bounds);
           foundQrs.put(qr.message, temp);
           temp.drawObject();
         } else {
-          QRObject temp = new QRObject(qr.message, cam);
+          temp = new QRObject(qr.message, cam);
           qrArray.put(qr.message, temp);
           temp.updateQRPoints(bounds);
-          /* qrArray.get(qr.message).updateQRPoints(bounds); */
           foundQrs.put(qr.message, temp);
           qrArray.get(qr.message).drawObject();
           println("qrobject [" + qr.message + "] found and created");
         }
       }
+
       if (debug > 0) {
         debugPrint(8);
         colorPoints(bounds);
       }
+
       if (debug > 1) {
         String printpoints = "";
         for (int j = 0; j < bounds.length; j++) {
@@ -230,14 +232,18 @@ void draw() {
         };
         debugInventory.set("bounds: ", printpoints);
       }
+
       if (!qrArray.isEmpty()) {
         if (!showMenu) {
           /* image(qrArray.get(qr.message).getGraphics(), 0, 0); */
 
         } else {
           if (!keepStill) {
-            stillArray.put(qr.message, qrArray.get(qr.message));
-            stillQRs.add(qrArray.get(qr.message).getGraphics());
+            temp = qrArray.get(qr.message);
+            temp.updateQRPoints(bounds);
+            temp.updateWidthAndHeight();
+            stillArray.put(qr.message, temp);
+            stillQRs.add(temp.getGraphics());
             /* image(qrArray.get(qr.message).getGraphics(), 0, 0); */
           }
         }
@@ -346,46 +352,14 @@ void draw() {
             String[] choices = stillArray.keySet().toArray(new String[stillArray.size()]);
             for (int i = 0; i < stillArray.size(); i++) {
 
-              QRObject temp = stillArray.get(choices[i]);
               image(stillQRs.get(i), 0, 0);
-              float offsetX = temp.getOffsetX();
-              float offsetY = temp.getOffsetY();
-              float[] center = temp.getCenter();
-              float angle = temp.getAngle();
-              float qrWidth = temp.getWidth();
-              float qrHeight = temp.getHeight();
-              boundaries.add(new Boundary(center[0] + offsetX, center[1] + offsetY, qrWidth, qrHeight, 0));
+              QRObject temp = stillArray.get(choices[i]);
+              temp.updateWidthAndHeight();
+              temp.qrParticles(boundaries, systems);
 
-              float diffX = center[0]/10 + qrWidth/2;
-              float diffY = center[1]/10 + qrHeight/2;
-              systems.add(new ParticleSystem(2, new PVector(center[0] - diffX, center[1] - diffY)));
-              systems.add(new ParticleSystem(2, new PVector(center[0] + diffX, center[1] - diffY)));
             };
           }
-          /* if (!stillArray.isEmpty()) { */
-          /*   String[] choices = stillArray.keySet().toArray(new String[stillArray.size()]); */
-          /*   QRObject chosen = stillArray.get(choices[menuChoice]); */
-          /*   float chosenWidth = chosen.getWidth(); */
-          /*   float chosenHeight = chosen.getHeight(); */
-          /*   float chosenRatioX = chosen.getRatioX(); */
-          /*   float chosenRatioY = chosen.getRatioY(); */
-          /*   float chosenOffsetX = chosen.getOffsetX(); */
-          /*   float chosenOffsetY = chosen.getOffsetY(); */
-          /*   float[] chosenCenter = chosen.getCenter(); */
-          /*   float chosenAngle = chosen.getAngle(); */
-          /*   chosen.updateWidthAndHeight(); */
-          /*   strokeWeight(5); */
-          /*   stroke(255, 233, 0); */
-          /*   pushMatrix(); */
-          /*   translate(chosenCenter[0], chosenCenter[1]); */
-          /*   rotate(chosenAngle); */
-          /*   rectMode(CENTER); */
-          /*   fill(255, 0); */
-          /*   rect(0 + chosenOffsetX, 0 + chosenOffsetY, chosen.getWidth(), chosen.getHeight()); */
-          /*   noFill(); */
-          /*   popMatrix(); */
 
-        /* } */
       }
     } else {
       cam.read();
@@ -413,36 +387,9 @@ void drawQRs(HashMap<String, QRObject> QRs, PGraphics mask) {
     String[] qrKeys = QRs.keySet().toArray(new String[QRs.size()]);
     for (int i = 0; i < QRs.size(); i++) {
       QRObject temp = QRs.get(qrKeys[i]);
-      float offsetX = temp.getOffsetX();
-      float offsetY = temp.getOffsetY();
-      float[] center = temp.getCenter();
-      float angle = temp.getAngle();
-      float qrWidth = temp.getWidth();
-      float qrHeight = temp.getHeight();
-      mask.pushMatrix();
-      mask.translate(center[0], center[1]);
-      mask.rotate(angle);
-      /* float distance = qrDistance(a, b); */
-      /* objectWidth = distance * ratioX; */
-      /* objectHeight = distance * ratioY; */
-      mask.rect(0 + offsetX, 0 + offsetY, qrWidth, qrHeight);
-      mask.popMatrix();
-
-      boundaries.add(new Boundary(center[0] + offsetX, center[1] + offsetY, qrWidth, qrHeight, 0));
-
-      /* systems.add(new ParticleSystem(1, new PVector(center[0] - (qrWidth + 5), center[1] - (qrHeight + 5)))); */
-
-      /* box2d.setGravity(30, -30); */
-      /* systems.add(new ParticleSystem(1, new PVector(0, 0))); */
-      float diffX = center[0]/10 + qrWidth/2;
-      float diffY = center[1]/10 + qrHeight/2;
-      systems.add(new ParticleSystem(2, new PVector(center[0] - diffX, center[1] - diffY)));
-      /* box2d.setGravity(0, -30); */
-      systems.add(new ParticleSystem(2, new PVector(center[0] + diffX, center[1] - diffY)));
-      /* systems.add(new ParticleSystem(1, new PVector(center[0] + diffX, center[1] - diffY))); */
-      /* systems.add(new ParticleSystem(1, new PVector(center[0] + diffX, center[1] + diffX))); */
-      /* box2d.setGravity(-30, -30); */
-      /* systems.add(new ParticleSystem(1, new PVector(0, width))); */
+      temp.updateWidthAndHeight();
+      temp.qrMask(mask);
+      temp.qrParticles(boundaries, systems);
     };
   }
 }
@@ -663,7 +610,7 @@ void initializeCamera( int desiredWidth, int desiredHeight ) {
   } else {
     /* cam = new Capture(this, desiredWidth, desiredHeight, 30); */
     /* cam = new Capture(this, desiredWidth, desiredHeight, "HP Webcam 1300"); */
-    cam = new Capture(this, desiredWidth, desiredHeight, cameras[2]);
+    cam = new Capture(this, desiredWidth, desiredHeight, cameras[1]);
     cam.start();
   }
 }
