@@ -11,11 +11,15 @@ class Particle {
   PVector acceleration;
   float lifespan;
 
+  /* Body body; */
+
   Particle(PVector l) {
     acceleration = new PVector(0,0.8);
     velocity = new PVector(random(-10,10),random(-10,10));
     location = l.get();
     lifespan = 255.0;
+
+    /* makeBody(new Vec2(l.x,l.y),0.2f); */
   }
 
   void run() {
@@ -49,4 +53,41 @@ class Particle {
       return false;
     }
   }
+
+  // This function removes the particle from the box2d world
+  /* void killBody() { */
+  /*   box2d.destroyBody(body); */
+  /* } */
+
+ // This function adds the rectangle to the box2d world
+  /* void makeBody(Vec2 center, float r) { */
+  /*   // Define and create the body */
+  /*   BodyDef bd = new BodyDef(); */
+  /*       bd.type = BodyType.DYNAMIC; */
+
+  /*   bd.position.set(box2d.coordPixelsToWorld(center)); */
+  /*   body = box2d.createBody(bd); */
+
+  /*   // Give it some initial random velocity */
+  /*   body.setLinearVelocity(new Vec2(random(-1,1),random(-1,1))); */
+
+  /*   // Make the body's shape a circle */
+  /*   CircleShape cs = new CircleShape(); */
+  /*   cs.m_radius = box2d.scalarPixelsToWorld(r); */
+
+  /*   FixtureDef fd = new FixtureDef(); */
+  /*   fd.shape = cs; */
+
+  /*   fd.density = 1; */
+  /*   fd.friction = 0;  // Slippery when wet! */
+  /*   fd.restitution = 0.5; */
+
+  /*   // We could use this if we want to turn collisions off */
+  /*   //cd.filter.groupIndex = -10; */
+
+  /*   // Attach fixture to body */
+  /*   body.createFixture(fd); */
+
+  /* } */
+
 }

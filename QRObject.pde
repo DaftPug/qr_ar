@@ -12,6 +12,7 @@ class QRObject {
   float avr_angle;
   PGraphics cammie;
   PGraphics mask;
+  float increaser = 0.05;
   float ratioX = 1.0;
   float ratioY = 1.0;
   float offsetX = 0.0;
@@ -23,42 +24,9 @@ class QRObject {
     cam = camera;
     /* objectWidth = 100.0; */
     /* objectHeight = 100.0; */
-    cammie = createGraphics(640, 480);
-    mask = createGraphics(640, 480);
+    cammie = createGraphics(width, height);
+    mask = createGraphics(width, height);
   }
-
-  void drawObject() {
-    Point2D_F64 a = qrPoints[0];
-    Point2D_F64 b = qrPoints[1];
-    Point2D_F64 c = qrPoints[2];
-    Point2D_F64 d = qrPoints[3];
-    center = qrCenter(qrPoints);
-    float angle_one = atanifier(a, b);
-    float angle_two = atanifier(d, c);
-    // they might differ slightly due to viewing angle, so using the average angle to semi-account for this
-    avr_angle = (angle_one + angle_two) / 2;
-    /* int token = graphics.size() - 1; */
-    cammie.beginDraw();
-    cam.read();
-    cammie.image(cam, 0, 0);
-    mask.beginDraw();
-    mask.noStroke();
-    mask.rectMode(CENTER);
-    mask.pushMatrix();
-    mask.translate((float)center.x, (float)center.y);
-    mask.rotate(avr_angle);
-    float distance = qrDistance(a, b);
-    objectWidth = distance * ratioX;
-    objectHeight = distance * ratioY;
-    mask.rect(0, 0, objectWidth, objectHeight);
-    /* mask.rect(200, 0, objectWidth, objectHeight); */
-    mask.popMatrix();
-    mask.endDraw();
-    cammie.endDraw();
-    cammie.mask(mask);
-    mask.clear();
-  }
-
 
   void qrParticles(ArrayList<Boundary> boundaries, ArrayList<ParticleSystem> systems) {
     float cX = (float)center.x;
@@ -71,14 +39,22 @@ class QRObject {
     systems.add(new ParticleSystem(2, new PVector(cX + diffX, cY - diffY)));
   }
 
-  void qrMask(PGraphics mask) {
+  PGraphics getCam() {
+    return cammie;
+  }
+
+  PGraphics getMask() {
+    return mask;
+  }
+
+  void qrMask(PGraphics _mask) {
     float cX = (float)center.x;
     float cY = (float)center.y;
-    mask.pushMatrix();
-    mask.translate(cX, cY);
-    mask.rotate(getAngle());
-    mask.rect(0 + offsetX, 0 + offsetY, objectWidth, objectWidth);
-    mask.popMatrix();
+    _mask.pushMatrix();
+    _mask.translate(cX, cY);
+    _mask.rotate(getAngle());
+    _mask.rect(0 + offsetX, 0 + offsetY, objectWidth, objectHeight);
+    _mask.popMatrix();
   }
 
   void updateQRPoints(Point2D_F64[] newPoints) {
@@ -132,16 +108,24 @@ class QRObject {
     return center;
   }
 
-  void increaseWidth() {
-    ratioX += 0.05;
+  void increaseRatioX() {
+    ratioX += increaser;
+  }
+
+  void decreaseRatioX() {
+    ratioX -= increaser;
   }
 
   void increaseWidth(float increment) {
     ratioX += increment;
   }
 
-  void increaseHeight() {
-    ratioY += 0.05;
+  void increaseRatioY() {
+    ratioY += increaser;
+  }
+
+  void decreaseRatioY() {
+    ratioY -= increaser;
   }
 
   void increaseHeight(float increment) {
@@ -207,12 +191,22 @@ class QRObject {
   float[] getCenter() {
     float x = (float)center.x;
     float y = (float)center.y;
-    println("x:" + x);
-    println("y:" + y);
+    /* println("x:" + x); */
+    /* println("y:" + y); */
     float[] xy = {x, y};
 
-    println("xy:" + xy);
+    /* println("xy:" + xy); */
     return xy;
+  }
+
+  float getX() {
+    float x = (float)center.x;
+    return x;
+  }
+
+  float getY() {
+    float y = (float)center.y;
+    return y;
   }
 
   float getAngle() {
@@ -228,4 +222,19 @@ class QRObject {
     return new_angle;
   }
 
+  void increaseOffsetX() {
+    offsetX += (increaser * 10);
+  }
+
+  void increaseOffsetY() {
+    offsetY += (increaser * 10);
+  }
+
+  void decreaseOffsetX() {
+    offsetX -= (increaser * 10);
+  }
+
+  void decreaseOffsetY() {
+    offsetY -= (increaser * 10);
+  }
 }

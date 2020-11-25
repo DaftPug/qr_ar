@@ -34,6 +34,9 @@ SimpleGray gray;
 boolean showMenu = false;
 boolean keepStill = false;
 boolean tutorial = false;
+boolean initiated = false;
+String[] cameras;
+String camChoice = "";
 PImage imgContour;
 PImage imgBlobs;
 PImage input;
@@ -52,6 +55,9 @@ ArrayList<PImage> stillQRs = new ArrayList<PImage>();
 HashMap<String, QRObject> qrArray;
 HashMap<String, QRObject> foundQrs;
 HashMap<String, QRObject> stillArray;
+HashMap<String, Point2D_F64[]> qrsDetected;
+QRRenderer render;
+QRMenu options;
 
 // Particle variables
 // A reference to our box2d world
@@ -72,12 +78,11 @@ String[] debugText = {""};
 StringDict debugInventory;
 
 void setup() {
-  frameRate(60);
+  /* frameRate(60); */
+  frameRate(120);
 
-  /* size(1280, 480); */
-  /* size(640, 480, P3D); */
-  /* size(640,480); */
-  size(640, 480);
+  size(1280, 720);
+  /* size(640, 480); */
   smooth();
 
   // Initialize box2d physics and create the world
@@ -97,302 +102,164 @@ void setup() {
   qrArray = new HashMap<String, QRObject>();
   stillArray = new HashMap<String, QRObject>();
   foundQrs = new HashMap<String, QRObject>();
+
   debug = 0;
 
   initializeGraphics(width, height);
 
-  if (debug > 0) {
-    surface.setSize(cam.width*2, cam.height);
-  } else {
-    surface.setSize(cam.width, cam.height);
-  }
+
 
   detector = Boof.detectQR();
   loadQRCodes();
 }
 
 void initializeGraphics(int x, int y) {
-  initializeCamera(x, y);
-  /* graphics.add(createGraphics(640,480)); */
-  /* pg = createGraphics(640, 480); */
-  /* bg = createGraphics(640, 480); */
+
   bg = createGraphics(x, y);
-  /* menu = createGraphics(640, 480); */
   menu = createGraphics(x, y);
-  /* cammie = createGraphics(640, 480); */
   cammie = createGraphics(x, y);
-  /* mask = createGraphics(640, 480); */
   mask = createGraphics(x, y);
+  initializeCamera(width, height);
 }
 
 void draw() {
-  if((keyPressed == true) && (key == 'c')) {
-    toggleMenu();
-  }
-  if((keyPressed == true) && (key == 't')) {
-    toggleTest();
-  }
 
-  box2d.step();
-  box2d.step();
-  box2d.step();
-  if (cam.available() == true) {
-    cam.read();
-    if (!showMenu) {
-      bg.beginDraw();
-      /* saturated = Saturation.apply(cam, 0.05); */
-      saturated = Grayscale.apply(cam);
-      /* if (foundQrs.size() > 0) { */
-      /*   saturated = Pixelation.apply(saturated, 15); */
-      /* } */
-      still = saturated;
-      bg.image(saturated, 0, 0);
-      image(bg, 0, 0);
-      bg.endDraw();
-    } else {
-      if (!tutorial) {
-        menu.beginDraw();
-        if (!keepStill) {
-          still = Pixelation.apply(saturated, 10);
-        }
-        menu.image(still, 0, 0);
-        image(menu, 0, 0);
-        menu.endDraw();
-      } else {
-        menu.beginDraw();
-        menu.image(still, 0, 0);
-        image(menu, 0, 0);
-        menu.endDraw();
-      }
+  if (initiated) {
+    if((keyPressed == true) && (key == 'c')) {
+      toggleMenu();
     }
-    List<QrCode> found = detector.detect(cam);
-    foundQrs.clear();
-
-    if (found.size() > 0 || tutorial) {
-
-      // Run all the particle systems
-      for (ParticleSystem system: systems) {
-        system.run();
-
-        //int n = (int) random(0,2);
-        /* system.addParticles(1); */
-      }
-
-      // Display all the boundaries
-      /* for (Boundary wall: boundaries) { */
-      /*   wall.display(); */
-      /* } */
-    } else {
-      if (!tutorial) {
-        while(!boundaries.isEmpty()) {
-          boundaries.remove(0);
-        }
-        /* boundaries.clear(); */
-        while(!systems.isEmpty()) {
-          systems.remove(0);
-        }
-      }
-      /* systems.clear(); */
+    if((keyPressed == true) && (key == 't')) {
+      toggleTest();
     }
-    Point2D_F64[] bounds = new Point2D_F64[4];
 
-    // The QR codes being tested have a height and width of 42
-    for ( QrCode qr : found ) {
-
-      for ( int i = 0; i < qr.bounds.size(); i++ ) {
-        bounds[i] = qr.bounds.get(i);
-
-      }
-      QRObject temp;
+    box2d.step();
+    box2d.step();
+    box2d.step();
+    if (cam.available() == true) {
       if (!showMenu) {
-        if (qrArray.containsKey(qr.message)) {
-          temp = qrArray.get(qr.message);
-          temp.updateQRPoints(bounds);
-          foundQrs.put(qr.message, temp);
-          temp.drawObject();
+        render.standard();
+      } else {
+        if (!tutorial) {
+          render.menu(keepStill);
+
         } else {
-          temp = new QRObject(qr.message, cam);
-          qrArray.put(qr.message, temp);
-          temp.updateQRPoints(bounds);
-          foundQrs.put(qr.message, temp);
-          qrArray.get(qr.message).drawObject();
-          println("qrobject [" + qr.message + "] found and created");
+          render.demo();
         }
       }
+      if (!keepStill) {
+        if (!tutorial) {
+          cam.read();
+        }
+        stillQRs.clear();
+        stillArray.clear();
+        List<QrCode> found = detector.detect(cam);
+        foundQrs.clear();
 
-      if (debug > 0) {
-        debugPrint(8);
-        colorPoints(bounds);
-      }
+        if (found.size() > 0 || tutorial) {
 
-      if (debug > 1) {
-        String printpoints = "";
-        for (int j = 0; j < bounds.length; j++) {
-          printpoints = printpoints + bounds[j].toString();
-        };
-        debugInventory.set("bounds: ", printpoints);
-      }
-
-      if (!qrArray.isEmpty()) {
-        if (!showMenu) {
-          /* image(qrArray.get(qr.message).getGraphics(), 0, 0); */
-
-        } else {
-          if (!keepStill) {
-            temp = qrArray.get(qr.message);
-            temp.updateQRPoints(bounds);
-            temp.updateWidthAndHeight();
-            stillArray.put(qr.message, temp);
-            stillQRs.add(temp.getGraphics());
-            /* image(qrArray.get(qr.message).getGraphics(), 0, 0); */
+          // Run all the particle systems
+          for (ParticleSystem system: systems) {
+            system.run();
           }
+        } else {
+          if (!tutorial) {
+            while(!boundaries.isEmpty()) {
+              boundaries.remove(0);
+            }
+            /* boundaries.clear(); */
+            while(!systems.isEmpty()) {
+              systems.remove(0);
+            }
+          }
+          /* systems.clear(); */
         }
-      }
-      noStroke();
-    }
-    if (showMenu) {
-      if (!keepStill && !tutorial) {
-        keepStill = true;
-      }
-      if (keepStill) {
-        if (!stillQRs.isEmpty()) {
-          for (int i = 0; i < stillQRs.size(); i++) {
-            image(stillQRs.get(i), 0, 0);
+        /* Point2D_F64[] bounds = new Point2D_F64[4]; */
+
+        qrsDetected = new HashMap<String, Point2D_F64[]>();
+        // The QR codes being tested have a height and width of 42
+        for ( QrCode qr : found ) {
+
+          Point2D_F64[] bounds = new Point2D_F64[4];
+          for ( int i = 0; i < qr.bounds.size(); i++ ) {
+            bounds[i] = qr.bounds.get(i);
+
+          }
+          qrsDetected.put(qr.message, bounds);
+        }
+
+        String[] qrMessages = qrsDetected.keySet().toArray(new String[qrsDetected.size()]);
+        if (!qrsDetected.isEmpty()) {
+          for (int i = 0; i < qrsDetected.size(); i++) {
+            /* println("------------------- " + qrMessages[i] + " qrsDetected --------------------"); */
+            /* println(qrsDetected.get(qrMessages[i])); */
           };
         }
-        if (!stillArray.isEmpty()) {
-          String[] choices = stillArray.keySet().toArray(new String[stillArray.size()]);
-          QRObject chosen = stillArray.get(choices[menuChoice]);
-          float chosenWidth = chosen.getWidth();
-          float chosenHeight = chosen.getHeight();
-          float chosenRatioX = chosen.getRatioX();
-          float chosenRatioY = chosen.getRatioY();
-          float chosenOffsetX = chosen.getOffsetX();
-          float chosenOffsetY = chosen.getOffsetY();
-          float[] chosenCenter = chosen.getCenter();
-          float chosenAngle = chosen.getAngle();
 
-          if (stillArray.size() > 1) {
-            if ((keyPressed == true) && (key == 'p')) {
-              menuChoice++;
-              if (menuChoice == stillArray.size()) {
-                menuChoice = 0;
-              }
-            }
 
-            if ((keyPressed == true) && (key == 'o')) {
-              menuChoice = menuChoice - 1;
-              if (menuChoice < 0) {
-                menuChoice = stillArray.size() - 1;
-              }
-            }
-          }
-          // Change the size of the rectangle
-          if ((keyPressed == true) && (key == CODED)) {
-            if (keyCode == UP) {
-              chosenRatioY += 0.05;
-              chosen.setRatioY(chosenRatioY);
-            }
-            if (keyCode == DOWN) {
-              chosenRatioY -= 0.05;
-              chosen.setRatioY(chosenRatioY);
-            }
-            if (keyCode == LEFT) {
-              chosenRatioX -= 0.05;
-              chosen.setRatioX(chosenRatioX);
-            }
-            if (keyCode == RIGHT) {
-              chosenRatioX += 0.05;
-              chosen.setRatioX(chosenRatioX);
-            }
+        for (int i = 0; i < qrMessages.length; i++) {
+          QRObject temp;
+          QRObject tempStill;
+          Point2D_F64[] tempPoints = qrsDetected.get(qrMessages[i]);
+          /* println("tempPoints:"); */
+          /* println(tempPoints); */
+          if (qrArray.containsKey(qrMessages[i])) {
+              temp = qrArray.get(qrMessages[i]);
+              temp.updateQRPoints(tempPoints);
+              foundQrs.put(qrMessages[i], temp);
+              tempStill = qrArray.get(qrMessages[i]);
+              tempStill.updateQRPoints(tempPoints);
+              stillArray.put(qrMessages[i], tempStill);
+          } else {
+              temp = new QRObject(qrMessages[i], cam);
+              tempStill = new QRObject(qrMessages[i], cam);
+              qrArray.put(qrMessages[i], temp);
+              temp.updateQRPoints(tempPoints);
+              foundQrs.put(qrMessages[i], temp);
+              tempStill.updateQRPoints(tempPoints);
+              stillArray.put(qrMessages[i], tempStill);
+              /* qrArray.get(qrMessages[i]).drawObject(); */
+              println("new qrobject [" + qrMessages[i] + "] found and created");
           }
 
-          // move the rectangle
-          if ((keyPressed == true) && (key == 'w')) {
-            chosenOffsetY += 0.5;
-            chosen.setOffsetY(chosenOffsetY);
-          }
-          if ((keyPressed == true) && (key == 's')) {
-            chosenOffsetY -= 0.5;
-            chosen.setOffsetY(chosenOffsetY);
-          }
-          if ((keyPressed == true) && (key == 'a')) {
-            chosenOffsetX -= 0.5;
-            chosen.setOffsetX(chosenOffsetX);
-          }
-          if ((keyPressed == true) && (key == 'd')) {
-            chosenOffsetX += 0.5;
-            chosen.setOffsetX(chosenOffsetX);
-          }
-
-          if ((keyPressed == true) && (key == 'x')) {
-            String id = chosen.getId();
-            qrArray.get(id).setRatioX(chosenRatioX);
-            qrArray.get(id).setRatioY(chosenRatioY);
-            qrArray.get(id).setOffsetX(chosenOffsetX);
-            qrArray.get(id).setOffsetY(chosenOffsetY);
-          }
-          chosen.updateWidthAndHeight();
-          strokeWeight(5);
-          stroke(255, 233, 0);
-          pushMatrix();
-          translate(chosenCenter[0], chosenCenter[1]);
-          rotate(chosenAngle);
-          rectMode(CENTER);
-          fill(255, 0);
-          rect(0 + chosenOffsetX, 0 + chosenOffsetY, chosen.getWidth(), chosen.getHeight());
-          noFill();
-          popMatrix();
         }
-
       }
-        if (tutorial) {
-          if (!stillQRs.isEmpty() && !stillArray.isEmpty()) {
 
+      if (showMenu) {
+        if (!keepStill && !tutorial) {
+          options.update(stillArray, qrArray);
+          keepStill = true;
+        }
+        if (keepStill) {
+
+          render.standardTail(stillArray);
+          options.config();
+        }
+        if (tutorial) {
+          if (!stillArray.isEmpty()) {
+            render.standardTail(stillArray);
             String[] choices = stillArray.keySet().toArray(new String[stillArray.size()]);
             for (int i = 0; i < stillArray.size(); i++) {
-
-              image(stillQRs.get(i), 0, 0);
               QRObject temp = stillArray.get(choices[i]);
               temp.updateWidthAndHeight();
               temp.qrParticles(boundaries, systems);
 
             };
           }
-
+        }
+      } else {
+        render.standardTail(foundQrs);
+        /* println("[!] rendering: " + foundQrs.size() + " QR codes"); */
       }
-    } else {
-      cam.read();
-      cammie.beginDraw();
-      cammie.image(cam, 0, 0);
-      mask.beginDraw();
-      mask.noStroke();
-      mask.rectMode(CENTER);
-      drawQRs(foundQrs, mask);
-      mask.endDraw();
-      cammie.mask(mask);
-      mask.clear();
-      image(cammie, 0, 0);
-      cammie.clear();
+
+    // end of if (cam.available) {}
+    mask.clear();
+    cammie.clear();
     }
-
-  // end of if (cam.available) {}
-  }
   // end of draw()
-}
-
-void drawQRs(HashMap<String, QRObject> QRs, PGraphics mask) {
-  if (!QRs.isEmpty()) {
-
-    String[] qrKeys = QRs.keySet().toArray(new String[QRs.size()]);
-    for (int i = 0; i < QRs.size(); i++) {
-      QRObject temp = QRs.get(qrKeys[i]);
-      temp.updateWidthAndHeight();
-      temp.qrMask(mask);
-      temp.qrParticles(boundaries, systems);
-    };
   }
 }
+
+
 
 void toggleTest() {
   if (tutorial) {
@@ -402,8 +269,8 @@ void toggleTest() {
     tutorial = false;
   } else {
     menuChoice = 0;
-    stillArray = new HashMap<String, QRObject>();
-    stillQRs = new ArrayList<PImage>();
+    /* stillArray = new HashMap<String, QRObject>(); */
+    /* stillQRs = new ArrayList<PImage>(); */
     showMenu = true;
     tutorial = true;
   }
@@ -424,8 +291,8 @@ void toggleMenu() {
     showMenu = false;
   } else {
     menuChoice = 0;
-    stillArray = new HashMap<String, QRObject>();
-    stillQRs = new ArrayList<PImage>();
+    /* stillArray = new HashMap<String, QRObject>(); */
+    /* stillQRs = new ArrayList<PImage>(); */
     showMenu = true;
   }
 }
@@ -477,140 +344,72 @@ void loadQRCodes() {
 
 }
 
-void drawVertices(Point2D_F64[] bounds, Point2D_F64[] newBounds) {
-  // Draw a line around each detected QR Code
-  beginShape();
-
-    for ( int i = 0; i < newBounds.length; i++ ) {
-      /* Point2D_F64 p = qr.bounds.get(i); */
-      Point2D_F64 p = newBounds[i];
-      vertex( (int)p.x, (int)p.y );
-    }
-
-    // close the loop
-    Point2D_F64 p = newBounds[0];
-
-    if (debug > 0) {
-      debugPrint(8);
-      colorPoints(bounds);
-      colorPoints(newBounds);
-    }
-    /* fill(255, 0, 0); */
-    /* if (qr.message.charAt(3) == '1') { */
-    /*   text("Warning!", (int)p.x-10, (int)p.y-10); */
-    /* } */
-    strokeWeight(5);
-    stroke(255, 0, 0);
-    /* fill(255, 0, 0, 50); */
-    vertex( (int)p.x, (int)p.y );
-
-  endShape();
-
-}
-
-void debugPrint(int textsize) {
-  /* String dist = "distance: " + floor(distance); */
-  /* String newDist = "newDistance: " + floor(newDistance); */
-  int start = 260;
-  textSize(textsize);
-  /* strokeWeight(1); */
-  /* stroke(0, 0, 0, 50); */
-  fill(255, 255, 255);
-  rect(640, 240, 640, 240);
-  fill(0, 0, 0);
-  String print = "";
-  String[] keys = debugInventory.keyArray();
-  if (keys.length > 0) {
-    for (int i = 0; i < keys.length; i++) {
-      /* println("Keys[i]: " + keys[i]); */
-      print = keys[i] + ": " + debugInventory.get(keys[i]);
-      /* int number = debugInventory.get(key[i]); */
-      /* println("number: " + number); */
-      /* println("print: " + print); */
-      text(print, 642, start);
-      start = start + textsize + 2;
-    };
-  }
-  /* text(dist, 660, 400); */
-  /* text(newDist, 660, 440); */
-
-}
-
-void addDebugText(String data) {
-  debugText = append(debugText, data);
-}
-
-void colorPoints(Point2D_F64[] points) {
-  float s_width = cam.width;
-  Point2D_F64 a = points[0];
-  Point2D_F64 b = points[1];
-  Point2D_F64 c = points[2];
-  Point2D_F64 d = points[3];
-  float aX = (float)a.getX() + s_width;
-  float aY = (float)a.getY();
-
-  float bX = (float)b.getX() + s_width;
-  float bY = (float)b.getY();
-
-  float cX = (float)c.getX() + s_width;
-  float cY = (float)c.getY();
-
-  float dX = (float)d.getX() + s_width;
-  float dY = (float)d.getY();
-  strokeWeight(10);
-
-  /* stroke(0, 0, 200); */
-  /* point(aX, aY); */
-
-  textSize(16);
-  fill(0, 0, 200);
-  text("A", aX, aY);
-
-  /* stroke(200, 0, 0); */
-  /* point(bX, bY); */
-  fill(200, 0, 0);
-  text("B", bX, bY);
-
-  fill(0, 200, 0);
-  text("C", cX, cY);
-
-  fill(255, 153, 51);
-  text("D", dX, dY);
-
-
-}
-
-float checkPi(float angle) {
-  angle = angle + PI;
-  if (angle > 2*PI) {
-    angle = angle - 2*PI;
-  } else if (angle < 0) {
-    angle = 2*PI - angle;
-  }
-  return angle;
-}
-
-double checkEdge(double p, double edge) {
-  if (p < 0) {
-    p = 0;
-  } else if (p > edge) {
-    p = edge;
-  }
-  return p;
-}
 
 void initializeCamera( int desiredWidth, int desiredHeight ) {
-  String[] cameras = Capture.list();
+  cameras = Capture.list();
   for (int i = 0; i < cameras.length; i++) {
     println("[" + i + "] " + cameras[i]);
   };
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
     exit();
-  } else {
-    /* cam = new Capture(this, desiredWidth, desiredHeight, 30); */
-    /* cam = new Capture(this, desiredWidth, desiredHeight, "HP Webcam 1300"); */
-    cam = new Capture(this, desiredWidth, desiredHeight, cameras[1]);
+  }
+}
+
+void chooseCam(String _camChoice) {
+
+    cam = new Capture(this, width, height, _camChoice);
     cam.start();
+    surface.setSize(cam.width, cam.height);
+    render = new QRRenderer(bg, menu, mask, cammie, cam);
+    options = new QRMenu(render, stillArray, qrArray);
+    initiated = true;
+}
+
+void keyPressed() {
+  if (!initiated) {
+   if (key == '0') {
+      chooseCam(cameras[0]);
+    }
+
+   if (key == '1') {
+
+      chooseCam(cameras[1]);
+    }
+
+   if (key == '2') {
+      chooseCam(cameras[2]);
+
+    }
+
+   if (key == '3') {
+      chooseCam(cameras[3]);
+    }
+
+   if (key == '4') {
+      chooseCam(cameras[4]);
+    }
+
+   if (key == '5') {
+      chooseCam(cameras[5]);
+    }
+
+   if (key == '6') {
+      chooseCam(cameras[6]);
+    }
+
+   if (key == '7') {
+      chooseCam(cameras[7]);
+    }
+
+   if (key == '8') {
+      chooseCam(cameras[8]);
+    }
+
+   if (key == '9') {
+      chooseCam(cameras[9]);
+    }
+
+
   }
 }

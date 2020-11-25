@@ -29,14 +29,13 @@ class Boundary {
     // We're just a box
     sd.setAsBox(box2dW, box2dH);
 
-
     // Create the body
     BodyDef bd = new BodyDef();
     bd.type = BodyType.STATIC;
     bd.angle = a;
     bd.position.set(box2d.coordPixelsToWorld(x,y));
     b = box2d.createBody(bd);
-    
+
     // Attached the shape to the body using a Fixture
     b.createFixture(sd,1);
   }

@@ -2,162 +2,15 @@
   {
     "offsetX": 0,
     "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "yellow",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "40f7366b-db9a-4523-b079-6d4e56cb8fe4",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 20,
-    "ratioX": 2.649998426437378,
-    "qrID": "bff972eb-f6af-4d9b-893f-abda28bc1a51",
-    "ratioY": 2.399998664855957
-  },
-  {
-    "offsetX": 34.5,
-    "offsetY": -27.5,
-    "ratioX": 4.499999046325684,
-    "qrID": "ddb84689-cd5e-47a9-bc5b-1af189ffc87b",
-    "ratioY": 1.8999991416931152
-  },
-  {
-    "offsetX": -63,
-    "offsetY": 7.5,
-    "ratioX": 0.5499998331069946,
+    "ratioX": 1.3999998569488525,
     "qrID": "red",
-    "ratioY": 2.899998188018799
+    "ratioY": 2.9999983310699463
   },
   {
     "offsetX": 0,
     "offsetY": 0,
     "ratioX": 1,
-    "qrID": "74a64f68-e8ae-4c57-adf7-3d39b1672c5f",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "64f1a026-4575-467f-bfc3-5a818dec244d",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "68c191cf-6298-40f5-b694-28c496e54b52",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "42b15d24-0012-4727-b480-776e1cf1abdb",
-    "ratioY": 1
-  },
-  {
-    "offsetX": -9.5,
-    "offsetY": 21,
-    "ratioX": 2.2499988079071045,
     "qrID": "green",
-    "ratioY": 5.800004005432129
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "2c8e19b0-a2d6-41dd-9768-d80cb24cc8b8",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 6.5,
-    "offsetY": 22.5,
-    "ratioX": 2.399998664855957,
-    "qrID": "81764a86-0318-4532-9eda-fc40183078ee",
-    "ratioY": 2.1999988555908203
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 2.349998712539673,
-    "qrID": "730e9b94-83fa-4d76-a0e5-6bba4109b2d6",
-    "ratioY": 2.5999984741210938
-  },
-  {
-    "offsetX": -12.5,
-    "offsetY": 94,
-    "ratioX": 1.249999761581421,
-    "qrID": "6698e88c-0dfd-420a-ab0f-5f40c8ab2b92",
-    "ratioY": 3.8999972343444824
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "black",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 158.5,
-    "offsetY": 148,
-    "ratioX": 4.950000762939453,
-    "qrID": "53d3a87b-f692-4d6c-925d-68d1a5f7bace",
-    "ratioY": 4.75
-  },
-  {
-    "offsetX": -26.5,
-    "offsetY": 25,
-    "ratioX": 3.249997854232788,
-    "qrID": "ebb34364-cf79-4378-afbd-070eb3c8295c",
-    "ratioY": 2.7999982833862305
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "61d50856-82a6-4083-ba45-fbdc812e4ed0",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "3e7df830-7f7f-4b57-b4aa-641aebc41c19",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "979bfdc5-651f-41b4-ae7b-cff31fe1d00a",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "grey",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "71e5c9d2-9f87-4da8-af92-b25b762fed20",
-    "ratioY": 1
-  },
-  {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "310c60af-907a-4248-8982-a7a4896df46f",
     "ratioY": 1
   },
   {
@@ -168,31 +21,24 @@
     "ratioY": 1
   },
   {
-    "offsetX": 0,
-    "offsetY": 0,
-    "ratioX": 1,
-    "qrID": "68382a45-7488-45e4-b726-94af6f3f892d",
-    "ratioY": 1
+    "offsetX": 18.5,
+    "offsetY": 21.5,
+    "ratioX": 1.7499995231628418,
+    "qrID": "yellow",
+    "ratioY": 1.8499994277954102
   },
   {
     "offsetX": 0,
     "offsetY": 0,
     "ratioX": 1,
-    "qrID": "74d0e4ee-1a6c-4d51-b2ab-62cbbe980319",
+    "qrID": "black",
     "ratioY": 1
   },
   {
-    "offsetX": -1.5,
-    "offsetY": 71.5,
-    "ratioX": 1.9999990463256836,
-    "qrID": "64677563-c30f-4157-855b-2ce26c5746a1",
-    "ratioY": 2.9999983310699463
-  },
-  {
-    "offsetX": -38.5,
-    "offsetY": -12,
-    "ratioX": 5.500002861022949,
-    "qrID": "f9c96b00-596e-446f-8bf3-81d9179277b8",
-    "ratioY": 4.249998092651367
+    "offsetX": 17,
+    "offsetY": 1,
+    "ratioX": 1,
+    "qrID": "grey",
+    "ratioY": 1.6999993324279785
   }
 ]}

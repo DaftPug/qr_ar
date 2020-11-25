@@ -25,6 +25,7 @@ class ParticleSystem {
       Particle p = it.next();
       p.run();
       if (p.isDead()) {
+        /* p.killBody(); */
         it.remove();
       }
     }
