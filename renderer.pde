@@ -73,7 +73,8 @@ class QRRenderer {
         /* println("[!] drawn QR x: " + temp.getX() + " y: " + temp.getY()); */
         /* temp.updateWidthAndHeight(); */
         temp.qrMask(mask);
-        temp.qrParticles(boundaries, systems);
+        /* temp.qrParticles(systems); */
+        temp.qrDrawTree();
       };
     }
   }

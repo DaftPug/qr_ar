@@ -51,6 +51,7 @@ PGraphics mask;
 PGraphics cammie;
 File tempFile;
 ArrayList<PImage> stillQRs = new ArrayList<PImage>();
+ArrayList<tree> trees = new ArrayList<tree>();
 /* ArrayList<PGraphics> graphics = new ArrayList<PGraphics>(); */
 HashMap<String, QRObject> qrArray;
 HashMap<String, QRObject> foundQrs;
@@ -64,7 +65,7 @@ QRMenu options;
 Box2DProcessing box2d;
 
 // A list we'll use to track fixed objects
-ArrayList<Boundary> boundaries;
+/* ArrayList<Boundary> boundaries; */
 /* PImage bg; */
 // A list for all particle systems
 ArrayList<ParticleSystem> systems;
@@ -85,18 +86,8 @@ void setup() {
   /* size(640, 480); */
   smooth();
 
-  // Initialize box2d physics and create the world
-  box2d = new Box2DProcessing(this);
-  box2d.createWorld();
-
-  // We are setting a custom gravity
-  /* box2d.setGravity(30, -60); */
-  box2d.setGravity(0, 0);
-
-
   // Create ArrayLists
   systems = new ArrayList<ParticleSystem>();
-  boundaries = new ArrayList<Boundary>();
 
   debugInventory = new StringDict();
   qrArray = new HashMap<String, QRObject>();
@@ -106,8 +97,6 @@ void setup() {
   debug = 0;
 
   initializeGraphics(width, height);
-
-
 
   detector = Boof.detectQR();
   loadQRCodes();
@@ -132,9 +121,6 @@ void draw() {
       toggleTest();
     }
 
-    box2d.step();
-    box2d.step();
-    box2d.step();
     if (cam.available() == true) {
       if (!showMenu) {
         render.standard();
@@ -163,10 +149,7 @@ void draw() {
           }
         } else {
           if (!tutorial) {
-            while(!boundaries.isEmpty()) {
-              boundaries.remove(0);
-            }
-            /* boundaries.clear(); */
+
             while(!systems.isEmpty()) {
               systems.remove(0);
             }
@@ -241,7 +224,7 @@ void draw() {
             for (int i = 0; i < stillArray.size(); i++) {
               QRObject temp = stillArray.get(choices[i]);
               temp.updateWidthAndHeight();
-              temp.qrParticles(boundaries, systems);
+              temp.qrParticles(systems);
 
             };
           }
@@ -259,18 +242,13 @@ void draw() {
   }
 }
 
-
-
 void toggleTest() {
   if (tutorial) {
     saveQRCodes();
-    /* toggleStill(); */
     showMenu = false;
     tutorial = false;
   } else {
     menuChoice = 0;
-    /* stillArray = new HashMap<String, QRObject>(); */
-    /* stillQRs = new ArrayList<PImage>(); */
     showMenu = true;
     tutorial = true;
   }
@@ -291,8 +269,6 @@ void toggleMenu() {
     showMenu = false;
   } else {
     menuChoice = 0;
-    /* stillArray = new HashMap<String, QRObject>(); */
-    /* stillQRs = new ArrayList<PImage>(); */
     showMenu = true;
   }
 }
@@ -339,11 +315,7 @@ void loadQRCodes() {
       println("No file named qrcodes.json found");
       e.printStackTrace();
     }
-
-
-
 }
-
 
 void initializeCamera( int desiredWidth, int desiredHeight ) {
   cameras = Capture.list();
@@ -409,7 +381,5 @@ void keyPressed() {
    if (key == '9') {
       chooseCam(cameras[9]);
     }
-
-
   }
 }

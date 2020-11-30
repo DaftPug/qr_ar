@@ -17,27 +17,80 @@ class QRObject {
   float ratioY = 1.0;
   float offsetX = 0.0;
   float offsetY = 0.0;
+  tree myTree;
+  PVector startPoint;
+  PVector drection;
+  int count;
 
 
   QRObject(String id, Capture camera) {
     qrId = id;
     cam = camera;
-    /* objectWidth = 100.0; */
-    /* objectHeight = 100.0; */
     cammie = createGraphics(width, height);
     mask = createGraphics(width, height);
+
   }
 
-  void qrParticles(ArrayList<Boundary> boundaries, ArrayList<ParticleSystem> systems) {
+  void qrParticles(ArrayList<ParticleSystem> systems) {
     float cX = (float)center.x;
     float cY = (float)center.y;
-    boundaries.add(new Boundary(cX + offsetX, cY + offsetY, objectWidth, objectHeight, 0));
 
-    float diffX = cX/10 + objectWidth/2;
-    float diffY = cY/10 + objectHeight/2;
+    float diffX = cX/25 + objectWidth/2;
+    float diffY = cY/25 + objectHeight/2;
+    /* float diffX = cX/10 + objectWidth/2; */
+    /* float diffY = cY/10 + objectHeight/2; */
+
     systems.add(new ParticleSystem(2, new PVector(cX - diffX, cY - diffY)));
     systems.add(new ParticleSystem(2, new PVector(cX + diffX, cY - diffY)));
+    /* systems.add(new ParticleSystem(2, new PVector(cX + diffX, cY - diffY))); */
+    /* systems.add(new ParticleSystem(2, new PVector(cX + diffX, cY - diffY))); */
   }
+
+  float[] transCalc() {
+    float x = (float)center.x;
+    float y = (float)center.y;
+    float transx = width/2;
+    float transy = height/2;
+    if (x != transx) {
+      transx = x - transx;
+    }
+    if (y != transy) {
+      transy = y - transy;
+    }
+    float transxy[] = {transx, transy};
+    return transxy;
+  }
+
+  void qrDrawTree() {
+    float[] transXY = transCalc();
+    float _x = transXY[0];
+    float _y = transXY[1];
+    pushMatrix();
+    translate(_x, _y);
+    rotate(avr_angle);
+    myTree.swing();
+    stroke(80, 0, 50, 200);
+    for(int i = 1; i < count; i ++) {
+      strokeWeight(myTree.twig[(int)myTree.map[i].x].thickness[(int)myTree.map[i].y]);
+      line(myTree.twig[(int)myTree.map[i].x].location[(int)myTree.map[i].y - 1].x, myTree.twig[(int)myTree.map[i].x].location[(int)myTree.map[i].y - 1].y,
+           myTree.twig[(int)myTree.map[i].x].location[(int)myTree.map[i].y].x, myTree.twig[(int)myTree.map[i].x].location[(int)myTree.map[i].y].y);
+    }
+
+    noStroke();
+    for(int i = 0; i < myTree.twig.length; i++) {
+      int num = myTree.twig[i].location.length - 1;
+      int r = (int)random(50, 250);
+      int g = (int)random(50, 250);
+      int b = (int)random(50, 250);
+      fill(r, g, b);
+      ellipse(myTree.twig[i].location[num].x, myTree.twig[i].location[num].y, 12, 12);
+    }
+    popMatrix();
+
+
+
+  }
+
 
   PGraphics getCam() {
     return cammie;
@@ -61,6 +114,15 @@ class QRObject {
     qrPoints = newPoints;
     center = qrCenter(qrPoints);
     updateWidthAndHeight();
+    float bot = (float)center.y + objectHeight/2;
+    if (myTree == null) {
+      /* startPoint = new PVector(0.0, 0.0); */
+      /* startPoint = new PVector((float)center.x, bot); */
+      startPoint = new PVector(width/2, height/2);
+      drection = new PVector(0, -height);
+      myTree = new tree(startPoint, drection);
+      count = myTree.treeSize;
+    }
   }
 
   void updateWidthAndHeight() {

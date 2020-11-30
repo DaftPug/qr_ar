@@ -38,7 +38,6 @@ class QRMenu {
       render.qrBox(temp);
     }
 
-
   }
 
   void chooser(QRObject qrCode, int qrCount) {

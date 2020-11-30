@@ -1,10 +1,17 @@
 {"qrCodes": [
   {
+    "offsetX": 3,
+    "offsetY": 6,
+    "ratioX": 1.4499998092651367,
+    "qrID": "red",
+    "ratioY": 1.3999998569488525
+  },
+  {
     "offsetX": 0,
     "offsetY": 0,
-    "ratioX": 1.3999998569488525,
-    "qrID": "red",
-    "ratioY": 2.9999983310699463
+    "ratioX": 1,
+    "qrID": "fa32f898-f312-4e77-975b-a65d02d6dc67",
+    "ratioY": 1
   },
   {
     "offsetX": 0,
@@ -21,6 +28,13 @@
     "ratioY": 1
   },
   {
+    "offsetX": 0,
+    "offsetY": 0,
+    "ratioX": 1,
+    "qrID": "fbff8f76-d05a-4c35-9231-10a27d0acd05",
+    "ratioY": 1
+  },
+  {
     "offsetX": 18.5,
     "offsetY": 21.5,
     "ratioX": 1.7499995231628418,
@@ -28,10 +42,24 @@
     "ratioY": 1.8499994277954102
   },
   {
+    "offsetX": -91,
+    "offsetY": 173,
+    "ratioX": 3.0999979972839355,
+    "qrID": "black",
+    "ratioY": 4.90000057220459
+  },
+  {
     "offsetX": 0,
     "offsetY": 0,
     "ratioX": 1,
-    "qrID": "black",
+    "qrID": "dca0fdc3-4794-4918-a190-f7f60150a28b",
+    "ratioY": 1
+  },
+  {
+    "offsetX": 0,
+    "offsetY": 0,
+    "ratioX": 1,
+    "qrID": "f7b0d382-1ca4-4327-b987-e2708cc70814",
     "ratioY": 1
   },
   {
