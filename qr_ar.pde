@@ -41,8 +41,8 @@ String[] debugText = {""};
 StringDict debugInventory;
 
 void setup() {
-  size(1280, 480);
-  /* size(640, 480, P3D); */
+  /* size(1280, 480); */
+  size(640, 480);
   debugInventory = new StringDict();
   qrArray = new HashMap<String, QRObject>();
   debug = 0;
